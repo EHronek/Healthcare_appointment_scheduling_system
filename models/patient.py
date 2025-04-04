@@ -16,7 +16,7 @@ class Patient(BaseModel, Base):
         email = Column(String(128), nullable=False)
         insurance_number = Column(String(128), unique=True, nullable=False)
         insurance_provider = Column(String(128), nullable=True)
-        user_id = Column(String(128), ForeignKey('users.id'), nullable=False)
+        user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
 
         user = relationship('User', back_populates='patients')
         appointments = relationship('Appointment', back_populates='patient')
