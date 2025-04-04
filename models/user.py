@@ -2,8 +2,7 @@
 """Defines the user model"""
 import models
 from models.base_model import BaseModel, Base
-from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, Enum
 from sqlalchemy.orm import relationship
 
 
