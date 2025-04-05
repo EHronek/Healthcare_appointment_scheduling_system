@@ -1,0 +1,4 @@
+create User name="John Doe" password="johndoe123" role="admin" email="john.doe@gmail.com"
+all User
+create User name="Hronek" password="hronek123" role="admin" email="hronek@gmail.com"
+all User

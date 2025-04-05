@@ -4,6 +4,7 @@ import models
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String, Enum
 from sqlalchemy.orm import relationship
+import bcrypt
 
 
 class User(BaseModel, Base):
@@ -27,3 +28,20 @@ class User(BaseModel, Base):
     def __init__(self, *args, **kwargs):
         """Initializes the User"""
         super().__init__(*args, **kwargs)
+
+    def _hash_password(self, password):
+        """
+        hashes a password securely using bcrypt
+        """
+        password_bytes = password.encode('utf-8')
+
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+
+        return hashed.decode('utf-8')
+    
+    def check_password(self, password):
+        """Checks if a given password matched the stored hashed password"""
+        password_bytes = password.encode('utf-8')
+        stored_hash_bytes = self.password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, stored_hash_bytes)
