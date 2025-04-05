@@ -9,6 +9,8 @@ import models
 class Doctor(BaseModel, Base):
     """Blueprint for doctor"""
     if models.storage_type == "db":
+        __tablename__ = "doctors"
+        
         first_name = Column(String(128), nullable=False)
         last_name = Column(String(128), nullable=False)
         email = Column(String(128), unique=True, nullable=False)
