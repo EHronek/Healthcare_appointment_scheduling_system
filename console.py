@@ -36,7 +36,7 @@ class HMSCommand(cmd.Cmd):
     
     def emptyline(self):
         """Overwriting the empty line method"""
-        return True
+        return False
     
     def do_quit(self, arg):
         """Quit command to exit the console"""

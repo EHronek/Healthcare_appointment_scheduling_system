@@ -4,12 +4,8 @@ from models.user import User
 from api.v1.views import app_views
 from models import storage
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from helper_functions import is_admin
 
-
-def is_admin():
-    """Helper to check if user has admin role for jwt"""
-    claims = get_jwt()
-    return claims.get('role') == 'admin'
 
 
 
