@@ -4,12 +4,13 @@ from models.user import User
 from api.v1.views import app_views
 from models import storage
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from api.v1.helper_functions import is_admin
+from api.v1.helper_functions import is_admin, role_required
 
 
 
 @app_views.route('/users', methods=["GET"], strict_slashes=False)
 @jwt_required()
+@role_required('admin')
 def get_users():
     """Gets all the users in the database"""
     if not is_admin():
@@ -43,6 +44,8 @@ def get_user_by_id(user_id):
 
 
 @app_views.route('/users', methods=["POST"], strict_slashes=False)
+@jwt_required()
+@role_required()
 def create_user():
     """Creates a new user """
     data = request.get_json()

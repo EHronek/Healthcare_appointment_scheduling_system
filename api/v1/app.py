@@ -2,7 +2,7 @@
 """Flask App"""
 import models
 from models.user import User
-from flask import Flask, jsonify, url_for, session
+from flask import Flask, jsonify, url_for, session, request
 import os
 from api.v1.views import app_views
 from authlib.integrations.flask_client import OAuth
@@ -11,6 +11,7 @@ from authlib.common.security import generate_token
 from flask_session import Session
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_cors import CORS
+from api.v1.helper_functions import generate_tokens_for_user
 
 
 app = Flask(__name__)
@@ -134,6 +135,34 @@ def refresh_token():
     new_access_token = create_access_token(identity=current_user)
     return jsonify(access_token=new_access_token)
 
+
+@app.route('/login-user', methods=["POST"])
+def login_user():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"msg": "Missing email or password"})
+    
+    user = models.storage.get_user_by_email(email)
+
+    if not user or not user.check_password(password):
+        return jsonify({"msg": "Invalid email or password"})
+    
+    tokens = generate_tokens_for_user(user=user)
+    access_token = tokens["access_token"]
+    refresh_token = tokens["refresh_token"]
+
+    return jsonify({
+        "msg": "Login successful",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": {
+            "id": user.id,
+            "role": user.role
+        }
+    }), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',port=5000, threaded=True, debug=True)

@@ -10,11 +10,12 @@ import re
 
 
 @app_views.route('/patients', methods=["GET"], strict_slashes=False)
-@jwt_required(refresh=True)
+@jwt_required()
 @role_required('admin')
 def get_all_patients():
     """Retrieves all the patients from the database"""
     patients = storage.all(Patient).values()
+    #print([p.to_dict() for p in patients])
 
     """ if not patients:
         return jsonify({"error", "not found"}), 404 """
@@ -24,7 +25,8 @@ def get_all_patients():
 
 
 @app_views.route("/patients/<patient_id>", methods=["GET"], strict_slashes=False)
-@jwt_required(refresh=True)
+@jwt_required()
+@role_required('admin', 'patient')
 def get_patient_by_id(patient_id):
     """Retrieves a specific patient by id"""
     patient = storage.get(Patient, patient_id)
@@ -55,8 +57,6 @@ def create_patient():
     patients = storage.all(Patient).values()
 
     if patients:
-
-
         # Check if patient with provided email already exists
         for patient in patients:
             if patient.email == data["email"]:
@@ -85,10 +85,47 @@ def create_patient():
     return jsonify(new_patient.to_dict()), 201
     
 
+@app_views.route("/patients/<string:patient_id>", methods=["PUT"], strict_slashes=False)
+@jwt_required()
+def update_patient(patient_id):
+    """Updates a specific patient data"""
+    patient = storage.get(Patient, patient_id)
+    if not patient:
+        return jsonify({"error": "patient not found"})
+    
+    new_data = request.get_json(silent=True)
+
+    if not new_data:
+        return jsonify({"error": "not a valid json"})
+    
+    keys_to_ignore = {"id", "created_at", "updated_at"}
+
+    for k, v in new_data.items():
+        if k not in keys_to_ignore:
+            setattr(patient, k, v)
+    patient.save()
+    return jsonify(patient.to_dict())
+
+
+@app_views.route("/patients/<string:patient_id>", methods=["DELETE"], strict_slashes=False)
+@jwt_required()
+
+def delete_patient(patient_id):
+    """Deletes a specific patient with id"""
+    patient = storage.get(Patient, patient_id)
+
+    if not patient:
+        return jsonify({"error": "patient not found"})
+    
+    storage.delete(patient)
+    return jsonify({"message": "patient deleted successfully"})    
+
+
+
 @app_views.route("/patients/<string:patient_id>/appointments", methods=['GET'], strict_slashes=False)
 @jwt_required(refresh=True)
 @role_required('admin', 'patient')
-def delete_patient(patient_id):
+def get_patient_appointment(patient_id):
     """Delete a specific patient """
     patient = storage.get(Patient, patient_id)
     user = patient.user
