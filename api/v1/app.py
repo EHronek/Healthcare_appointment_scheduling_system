@@ -10,14 +10,25 @@ from flask_jwt_extended import JWTManager, create_access_token, create_refresh_t
 from authlib.common.security import generate_token
 from flask_session import Session
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_cors import CORS
 
 
 app = Flask(__name__)
 
 app.secret_key = os.getenv('SECRET_KEY')
 
+
+
+# jwt setup
+jwt = JWTManager(app)
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
+# Session configuration (required for nonce)
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
+
+# CORS configuration - only allow frontend origins
+# CORS(app, origins=[''], supports_credentials=True)
 
 
 # OAuth Setup
@@ -46,8 +57,6 @@ google = oauth.register(
     }
 )
 
-# jwt setup
-jwt = JWTManager(app)
 
 # register bluprints
 app.register_blueprint(app_views)
@@ -56,6 +65,7 @@ app.register_blueprint(app_views)
 def teardown_db(exception):
     """Closes the current db session """
     models.storage.close()
+
 
 
 @app.route("/login")
@@ -74,7 +84,14 @@ def authorize():
     try:
         token = google.authorize_access_token()
         nonce = session.get('nonce')
+
+        if not nonce:
+            return jsonify(error="Missing nonce in session"), 400
+        
         user_info = google.parse_id_token(token, nonce=nonce)
+
+        if not user_info:
+            return jsonify(error="Invalid token or nonce mismatch"), 400
 
         # extract user info
         email = user_info.get('email')
@@ -96,9 +113,13 @@ def authorize():
         # Generate JWT
         access_token = create_access_token(identity=str(user.id), additional_claims={'role': user.role})
         refresh_token = create_refresh_token(identity=str(user.id))
-        session['user_id'] = user.id
+
+        # Remove user_id from session if not needed anymore
+        session.pop('nonce', None)
         
-        user = models.storage.get(User, session['user_id'])
+        #session['user_id'] = user.id
+        #user = models.storage.get(User, session['user_id'])
+
         print(user)
         return jsonify(access_token=access_token, refresh_token=refresh_token), 200
     
