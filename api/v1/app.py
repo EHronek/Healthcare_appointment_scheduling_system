@@ -9,6 +9,7 @@ from authlib.integrations.flask_client import OAuth
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token
 from authlib.common.security import generate_token
 from flask_session import Session
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 app = Flask(__name__)
@@ -104,6 +105,13 @@ def authorize():
     except Exception as e:
         return jsonify(error=str(e)), 500
 
+
+@app.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh_token():
+    current_user = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user)
+    return jsonify(access_token=new_access_token)
 
 
 if __name__ == "__main__":

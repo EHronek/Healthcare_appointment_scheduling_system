@@ -4,8 +4,7 @@ from models.user import User
 from api.v1.views import app_views
 from models import storage
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from helper_functions import is_admin
-
+from api.v1.helper_functions import is_admin
 
 
 
