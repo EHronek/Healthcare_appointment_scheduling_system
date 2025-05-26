@@ -17,8 +17,8 @@ def get_all_patients():
     patients = storage.all(Patient).values()
     #print([p.to_dict() for p in patients])
 
-    """ if not patients:
-        return jsonify({"error", "not found"}), 404 """
+    if not patients:
+        return jsonify({"error", "not found"}), 404
     
     return jsonify([patient.to_dict() for patient in patients]), 200
 
