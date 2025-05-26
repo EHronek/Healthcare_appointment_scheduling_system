@@ -31,6 +31,7 @@ def get_profile():
 
 @app_views.route('/users/<user_id>', methods=["GET"], strict_slashes=False)
 @jwt_required()
+@role_required('admin')
 def get_user_by_id(user_id):
     """Retrieves a specific user from the database"""
     current_user_id = get_jwt_identity()
@@ -45,7 +46,7 @@ def get_user_by_id(user_id):
 
 @app_views.route('/users', methods=["POST"], strict_slashes=False)
 @jwt_required()
-@role_required()
+@role_required('admin')
 def create_user():
     """Creates a new user """
     data = request.get_json()
@@ -59,12 +60,34 @@ def create_user():
         
     if data['role'] not in ['admin', 'doctor', 'patient']:
         return jsonify({"error": "Invalid role"}), 400
-        
+    
+    """ print("Type", type(data['role']))
+    print("isintace=> ", isinstance(data['role'], tuple))
+    print("data", data['role']) """
+    #role = data['role']
+
+    if storage.get_user_by_email(data.get("email")):
+        return jsonify({"error": "email already exists"}), 400
+
     new_user = User()
-    new_user.name=data["name"],
+    """ new_user.name=data["name"],
     new_user.password=new_user._hash_password(data['password']),
-    new_user.role=data["role"],
-    new_user.email=data["email"]
+    new_user.role=role,
+    new_user.email=data["email"] """
+    new_user.name = data.get("name")
+    new_user.email = data.get("email")
+
+    hashed_pw = new_user._hash_password(data.get('password'))
+    new_user.password = hashed_pw
+
+    new_user.role = data.get("role")
+    
+
+
+    """ print(new_user.role)
+    print(type(new_user.role))
+    #new_user.role=role
+    print(new_user.role, type(new_user.role)) """
 
     storage.new(new_user)
     storage.save()

@@ -98,13 +98,14 @@ def update_patient(patient_id):
     if not new_data:
         return jsonify({"error": "not a valid json"})
     
+    
     keys_to_ignore = {"id", "created_at", "updated_at"}
 
     for k, v in new_data.items():
         if k not in keys_to_ignore:
             setattr(patient, k, v)
     patient.save()
-    return jsonify(patient.to_dict())
+    return jsonify(patient.to_dict()), 200
 
 
 @app_views.route("/patients/<string:patient_id>", methods=["DELETE"], strict_slashes=False)
@@ -115,10 +116,10 @@ def delete_patient(patient_id):
     patient = storage.get(Patient, patient_id)
 
     if not patient:
-        return jsonify({"error": "patient not found"})
+        return jsonify({"error": "patient not found"}), 404
     
     storage.delete(patient)
-    return jsonify({"message": "patient deleted successfully"})    
+    return jsonify({"message": "patient deleted successfully"}), 200 
 
 
 
