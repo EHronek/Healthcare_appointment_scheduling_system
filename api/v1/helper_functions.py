@@ -9,7 +9,7 @@ from models.doctor import Doctor
 from models import storage
 from datetime import datetime, time, timedelta
 import pytz
-from sqlalchemy import func
+from sqlalchemy import func, String, and_, text
 from models.exception import Exception as DoctorException
 
 
@@ -50,7 +50,7 @@ def generate_tokens_for_user(user):
     }
 
 
-
+'''
 def is_doctor_available(doctor_id, start_time, duration, working_hours_start, working_hours_end):
     """Check if doctor is available for the request slot"""
     sess = storage.get_session()
@@ -124,8 +124,9 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
         return False, "Time slot already booked"
     
     return True, "available"
-
 '''
+
+
 def is_doctor_available(doctor_id, start_time, duration, working_hours_start, working_hours_end):
     """Check if doctor is available for the request slot"""
     sess = storage.get_session()
@@ -172,18 +173,80 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
         return False, "Doctor has marked this date as unavailable"
 
     # Check for conflicting appointments
-    conflicting_appointments = sess.query(Appointment).filter(
+    """ conflicting_appointments = sess.query(Appointment).filter(
         Appointment.doctor_id == doctor_id,
         Appointment.status == 'scheduled',
         Appointment.scheduled_time < end_time,
         Appointment.scheduled_time + Appointment.duration > start_time
+    ).count() """
+
+    conflicting_appointments = sess.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.status == 'scheduled',
+        Appointment.scheduled_time < end_time,
+        text("DATE_ADD(appointments.scheduled_time, INTERVAL appointments.duration MINUTE) > :start_time")
+        .bindparams(start_time=start_time)
     ).count()
 
     if conflicting_appointments > 0:
         return False, "Time slot already booked"
 
     return True, "Available"
+
 '''
+
+
+def is_doctor_available(doctor_id, start_time, duration, working_hours_start, working_hours_end):
+    sess = storage.get_session()
+    sess.expire_all()  # Ensure fresh data
+
+    doctor = sess.get(Doctor, doctor_id)
+    if not doctor:
+        return False, "Doctor not found"
+
+    end_time = start_time + timedelta(minutes=duration)
+
+    if start_time.time() < working_hours_start:
+        return False, "Start time outside working hours"
+    if end_time.time() > working_hours_end:
+        return False, "End time outside working hours"
+
+    day_of_week = start_time.strftime('%A')
+    available_slots = sess.query(Availability).filter_by(
+        doctor_id=doctor_id,
+        day_of_week=day_of_week
+    ).all()
+
+    slot_available = any(
+        slot.start_time <= start_time.time() and
+        slot.end_time >= end_time.time()
+        for slot in available_slots
+    )
+    if not slot_available:
+        return False, "Doctor not available on this day/time"
+
+    exception = sess.query(DoctorException).filter_by(
+        doctor_id=doctor_id,
+        date=start_time.date()
+    ).first()
+    if exception and not exception.is_available:
+        return False, "Doctor has marked this date as unavailable"
+
+    # Manual overlap check
+    candidates = sess.query(Appointment).filter_by(
+        doctor_id=doctor_id,
+        status='scheduled'
+    ).all()
+
+    for appt in candidates:
+        appt_end = appt.scheduled_time + timedelta(minutes=appt.duration)
+        if appt.scheduled_time < end_time and appt_end > start_time:
+            print(f"Conflict detected with: {appt.scheduled_time} - {appt_end}")
+            return False, "Time slot already booked"
+
+    return True, "Available"
+'''
+
 
 def validate_appointment_data(data):
     errors = {}
@@ -212,5 +275,6 @@ def validate_appointment_data(data):
             errors['time'] = "Invalid time format (use ISO 8601)"
 
     return errors
+
 
 
