@@ -3,6 +3,17 @@ from flask_jwt_extended import get_jwt, get_jwt_identity, verify_jwt_in_request
 from flask import jsonify
 from functools import wraps
 from flask_jwt_extended import create_access_token, create_refresh_token
+from models.appointment import Appointment
+from models.availability import Availability
+from models.doctor import Doctor
+from models import storage
+from datetime import datetime, time, timedelta
+
+
+# Constants
+MIN_APPOINTMENT_DURATION = 15
+MAX_APPOINTMENT_DURATION = 120
+
 
 def is_admin():
     """Helper to check if user has admin role for jwt"""
@@ -34,3 +45,97 @@ def generate_tokens_for_user(user):
         "access_token": access_token,
         "refresh_token": refresh_token
     }
+
+
+def is_doctor_available(doctor_id, start_time, duration, working_hours_start, working_hours_end):
+    """Check if doctor is available for the request slot"""
+    sess = storage.get_session()
+
+    # Check if doctor with doctor_id exists
+    doctor = storage.get(Doctor, doctor_id)
+    if not doctor:
+        print("Doctor not found")
+        return
+    
+    end_time = (datetime.combine(start_time.date(), start_time.time()) + timedelta(minutes=duration))
+
+    # check working hours
+    if start_time.time() < working_hours_start or end_time.time() > working_hours_end:
+        return False
+    
+    # check recurring availability
+    
+    
+
+    day_of_week = start_time.strftime('%A')
+
+    f""" or avail in available_slots:
+        if avail.day_of_week == day_of_week:
+            availability = avail
+
+
+    slot_available = any(availability.start_time <= start_time.time() and
+                         availability.end_time >= end_time.time()) """
+    availability_slots = [
+        avail for avail in doctor.availability
+        if avail.day_of_week == day_of_week and
+        avail.start_time <= start_time.time() and
+        avail.end_time >= end_time.time()
+    ]
+    
+    if not availability_slots:
+        return False
+    
+    # check exceptions
+    exception = None
+    exceptions = doctor.exceptions
+    for exmp in exceptions:
+        if exmp.date == start_time.date():
+            exception = exmp
+            break
+
+    if exception and not exception.is_available:
+        return False # Doctor marked it as unavailable
+    
+    conflicting_appointments = sess.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.status == 'scheduled',
+        Appointment.scheduled_time < end_time,
+        (Appointment.scheduled_time + Appointment.duration) > start_time
+    ).count()
+
+    if conflicting_appointments > 0:
+        return False # Time slot already booked
+    
+    return True
+
+
+def validate_appointment_data(data):
+    errors = {}
+
+    required_fields = ['doctor_id', 'scheduled_time', 'duration']
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        errors['missing'] = f"Required fields: {', '.join(missing_fields)}"
+
+    # Duration validation
+    if 'duration' in data:
+        try:
+            duration = int(data['duration'])
+            if not MIN_APPOINTMENT_DURATION <= duration <= MAX_APPOINTMENT_DURATION:
+                errors['duration'] = f"Duration must be between {MIN_APPOINTMENT_DURATION} - {MAX_APPOINTMENT_DURATION} minutes"
+        except ValueError:
+            errors['duration'] = "Invalid duration format"
+
+    # Time validation
+    if 'scheduled_time' in data:
+        try:
+            scheduled_time = datetime.fromisoformat(data['scheduled_time'])
+            if scheduled_time < datetime.now() + timedelta(minutes=30):
+                errors['time'] = "Appointment must be scheduled at least 30 minutes in advance"
+        except ValueError:
+            errors['time'] = "Invalid time format (use ISO 8601)"
+
+    return errors
+
+
