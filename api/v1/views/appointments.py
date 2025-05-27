@@ -11,6 +11,7 @@ from models.doctor import Doctor
 from models.patient import Patient
 from models.availability import Availability
 from datetime import datetime, time, timedelta
+from models.user import User
 
 
 @app_views.route("/appointments", methods=["POST"], strict_slashes=False)
@@ -98,4 +99,96 @@ def create_appointment():
         
         return jsonify({"error": str(e)}), 500
         
+@app_views.route("/appointments/<string:appointment_id>", methods=["GET"], strict_slashes=False)
+@jwt_required()
+@role_required('admin', 'doctor', 'patient')
+def get_appointment(appointment_id):
+    """Retrieves a specific appointment record from db"""
+    sess = storage.get_session()
+    appointment = storage.get(Appointment, appointment_id)
 
+    if not appointment:
+        return jsonify({"error": "appointment not found"}), 404
+    
+    current_user_id = get_jwt_identity()
+
+    # Check if user is patient
+    user = storage.get(User, current_user_id)
+
+    if not user:
+        return jsonify({"error": "user not found"}), 404
+    
+    role = user.role
+
+    if role == 'patient':
+        patient = sess.query(Patient).filter(Patient.user_id == current_user_id).first()
+        if not patient or appointment.patient_id != patient.id:
+            return jsonify({"error": "Unauthorized"}), 403
+    elif role == "doctor":
+        doctor = sess.query(Doctor).filter(Doctor.user_id == current_user_id).first()
+        if not doctor or appointment.doctor_id != current_user_id:
+            return jsonify({"error": "Unauthorized"}), 403
+
+    return jsonify({
+        "id": appointment.id,
+        "patient_id": appointment.patient_id,
+        "doctor_id": appointment.doctor_id,
+        "scheduled_time": appointment.scheduled_time.isoformat(),
+        "duration": appointment.duration.total_seconds() / 60,
+        "status": appointment.status
+
+    }), 200
+
+
+@app_views.route("/appointments/<string:appointment_id>/cancel", methods=["PUT"], strict_slashes=False)
+@jwt_required()
+@role_required('doctor', 'patient')
+def cancel_appointment(appointment_id):
+    """Cancels a specific appointment record"""
+    sess = storage.get_session()
+    appointment = storage.get(Appointment, appointment_id)
+
+    if not appointment:
+        return jsonify({"error": "appointment not found"}), 404
+    current_user_id = get_jwt_identity()
+
+    current_user = storage.get(User, current_user_id)
+
+    if not current_user:
+        return jsonify({"error": "user not found"})
+    
+    user_role = current_user.role
+
+    # authorization
+    if user_role == 'patient':
+        patient = sess.query(Patient).filter(Patient.user_id==current_user_id).first()
+        if not patient or appointment.patient_id != patient.id:
+            return jsonify({"error": "Unauthorized"}), 403
+    elif user_role == 'doctor':
+        doctor = sess.query(Doctor).filter(Doctor.user_id==current_user_id).first()
+        if not doctor or appointment.doctor_id != doctor.id:
+            return jsonify({"error": "Unauthorized"}), 403
+
+    # Business rules
+    time_until_appointment = appointment.scheduled_time - datetime.now()
+
+    # cant  cancel completed appointments
+    if appointment.status == "completed":
+        return jsonify({"error": "Cannot cancel completed appointments"}), 400
+    
+    # minimum 24 hr notice for cancellation
+    if time_until_appointment < timedelta(hours=24):
+        return jsonify({ "error": "Cancellation requires at least 24 hours notice",
+            "deadline": (appointment.scheduled_time - timedelta(hours=24)).isoformat()
+        }), 400
+    
+    appointment.status = 'cancelled'
+
+    # commit changes
+    try:
+        storage.save()
+        return  jsonify({"message": "Appointment cancelled successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "error while saving"}), 500
+
+    
