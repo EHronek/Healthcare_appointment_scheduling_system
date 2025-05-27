@@ -8,6 +8,9 @@ from models.availability import Availability
 from models.doctor import Doctor
 from models import storage
 from datetime import datetime, time, timedelta
+import pytz
+from sqlalchemy import func
+from models.exception import Exception as DoctorException
 
 
 # Constants
@@ -47,6 +50,7 @@ def generate_tokens_for_user(user):
     }
 
 
+
 def is_doctor_available(doctor_id, start_time, duration, working_hours_start, working_hours_end):
     """Check if doctor is available for the request slot"""
     sess = storage.get_session()
@@ -69,14 +73,26 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
 
     day_of_week = start_time.strftime('%A')
 
-    availability_slots = [
+    """ availability_slots = [
         avail for avail in doctor.availability
         if avail.day_of_week == day_of_week and
         avail.start_time <= start_time.time() and
         avail.end_time >= end_time.time()
-    ]
+    ] """
+
+    available_slots = sess.query(Availability).filter_by(
+        doctor_id=doctor_id,
+        day_of_week=day_of_week).all()
     
-    if not availability_slots:
+    #print(available_slots)
+
+    slot_available = any(
+        slot.start_time <= start_time.time() and
+        slot.end_time >= end_time.time()
+        for slot in available_slots
+    )
+    print(slot_available)
+    if not slot_available:
         return False, "Doctor not available on this day/time"
     
     # check exceptions
@@ -86,6 +102,13 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
         if exmp.date == start_time.date():
             exception = exmp
             break
+    """ exception = sess.query(Exception).filter_by(
+        doctor_id=doctor_id,
+        date=start_time.date()
+    ).first() """
+
+    print("Type of exception", type(exception))
+    print(exception)
 
     if exception and not exception.is_available:
         return False, "Doctor has marked this date as unavailable"
@@ -94,7 +117,7 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
         Appointment.doctor_id == doctor_id,
         Appointment.status == 'scheduled',
         Appointment.scheduled_time < end_time,
-        (Appointment.scheduled_time + Appointment.duration) > start_time
+        Appointment.scheduled_time + Appointment.duration > start_time
     ).count()
 
     if conflicting_appointments > 0:
@@ -102,6 +125,65 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
     
     return True, "available"
 
+'''
+def is_doctor_available(doctor_id, start_time, duration, working_hours_start, working_hours_end):
+    """Check if doctor is available for the request slot"""
+    sess = storage.get_session()
+
+    # Check if doctor exists
+    doctor = sess.get(Doctor, doctor_id)
+    if not doctor:
+        return False, "Doctor not found"
+
+    # Calculate end_time
+    end_time = start_time + timedelta(minutes=duration)
+
+    # Check working hours
+    if start_time.time() < working_hours_start:
+        return False, "Start time outside working hours"
+    if end_time.time() > working_hours_end:
+        return False, "End time outside working hours"
+
+    # Get weekday
+    day_of_week = start_time.strftime('%A')
+
+    # Fetch availability slots for this weekday
+    available_slots = sess.query(Availability).filter_by(
+        doctor_id=doctor_id,
+        day_of_week=day_of_week
+    ).all()
+
+    slot_available = any(
+        slot.start_time <= start_time.time() and
+        slot.end_time >= end_time.time()
+        for slot in available_slots
+    )
+
+    if not slot_available:
+        return False, "Doctor not available on this day/time"
+
+    # Check exceptions
+    exception = sess.query(DoctorException).filter_by(
+        doctor_id=doctor_id,
+        date=start_time.date()
+    ).first()
+
+    if exception and not exception.is_available:
+        return False, "Doctor has marked this date as unavailable"
+
+    # Check for conflicting appointments
+    conflicting_appointments = sess.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.status == 'scheduled',
+        Appointment.scheduled_time < end_time,
+        Appointment.scheduled_time + Appointment.duration > start_time
+    ).count()
+
+    if conflicting_appointments > 0:
+        return False, "Time slot already booked"
+
+    return True, "Available"
+'''
 
 def validate_appointment_data(data):
     errors = {}
