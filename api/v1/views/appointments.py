@@ -44,6 +44,9 @@ def create_appointment():
         if not doctor:
             return jsonify({"error": "Doctor not found"})
         
+        day_of_week = data["start_time"].strftime('%A')
+        print(day_of_week)
+        
         working_hours_start = datetime.strptime(data['start_time'], "%H:%M").time()
         working_hours_end = datetime.strptime(data['end_time'], "%H:%M").time()
         
