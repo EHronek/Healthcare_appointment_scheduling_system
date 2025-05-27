@@ -55,13 +55,13 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
     doctor = storage.get(Doctor, doctor_id)
     if not doctor:
         print("Doctor not found")
-        return
+        return False, "Doctor not available"
     
     end_time = (datetime.combine(start_time.date(), start_time.time()) + timedelta(minutes=duration))
 
     # check working hours
     if start_time.time() < working_hours_start or end_time.time() > working_hours_end:
-        return False
+        return False,  "Outside working hours"
     
     # check recurring availability
     
@@ -69,13 +69,6 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
 
     day_of_week = start_time.strftime('%A')
 
-    f""" or avail in available_slots:
-        if avail.day_of_week == day_of_week:
-            availability = avail
-
-
-    slot_available = any(availability.start_time <= start_time.time() and
-                         availability.end_time >= end_time.time()) """
     availability_slots = [
         avail for avail in doctor.availability
         if avail.day_of_week == day_of_week and
@@ -84,7 +77,7 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
     ]
     
     if not availability_slots:
-        return False
+        return False, "Doctor not available on this day/time"
     
     # check exceptions
     exception = None
@@ -95,7 +88,7 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
             break
 
     if exception and not exception.is_available:
-        return False # Doctor marked it as unavailable
+        return False, "Doctor has marked this date as unavailable"
     
     conflicting_appointments = sess.query(Appointment).filter(
         Appointment.doctor_id == doctor_id,
@@ -105,15 +98,15 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
     ).count()
 
     if conflicting_appointments > 0:
-        return False # Time slot already booked
+        return False, "Time slot already booked"
     
-    return True
+    return True, "available"
 
 
 def validate_appointment_data(data):
     errors = {}
 
-    required_fields = ['doctor_id', 'scheduled_time', 'duration']
+    required_fields = ['doctor_id', 'scheduled_time', 'duration', 'start_time', 'end_time']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         errors['missing'] = f"Required fields: {', '.join(missing_fields)}"

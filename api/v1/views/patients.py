@@ -36,12 +36,13 @@ def get_patient_by_id(patient_id):
 
 
 @app_views.route("/patients", methods=["POST"], strict_slashes=False)
-@jwt_required(refresh=True)
+@jwt_required()
+@role_required('admin', 'patient')
 def create_patient():
     """create a patient """
     data = request.get_json(silent=True)
 
-    current_user_id = get_jwt_identity()['id']
+    current_user_id = get_jwt_identity()
     if not data:
         return jsonify({"error": "not a valid json"}), 400
     
@@ -124,7 +125,7 @@ def delete_patient(patient_id):
 
 
 @app_views.route("/patients/<string:patient_id>/appointments", methods=['GET'], strict_slashes=False)
-@jwt_required(refresh=True)
+@jwt_required()
 @role_required('admin', 'patient')
 def get_patient_appointment(patient_id):
     """Delete a specific patient """
