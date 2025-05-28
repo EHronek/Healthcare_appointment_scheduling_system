@@ -62,7 +62,7 @@ A powerful terminal-based CLI for developers to interact with the system’s dat
 manage (create, update, destroy, etc) objects via a console / command interpreter
 store and persist objects to a file (JSON file)
 
-### STILL INCOMPLETE
+### **`NOTE`** PROTOTYPE STILL INCOMPLETE
 
 ## Sample Commands to create an object:
 ```bash
