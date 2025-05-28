@@ -1,17 +1,17 @@
 # 🩺 Healthcare Appointment Scheduling System
 
-A robust and secure backend system built with **Python**, **Flask**, and **SQLAlchemy ORM** for managing appointments, doctors, patients, and medical records in a healthcare setting. Designed with modularity, scalability, and real-world usability in mind, this system features RESTful APIs, role-based authentication, and a powerful command-line interface (CLI) for managing the entire application lifecycle.
+A robust and secure backend system built with **Python**, **Flask**, and **SQLAlchemy ORM** for managing appointments, doctors, patients, and medical records in a healthcare setting. Designed with modularity, scalability, and real-world usability in mind, this system features RESTful APIs, role-based authentication, and a powerful command-line interface (CLI) for managing objects and the entire application lifecycle.
 
 ---
 
 ## 🚀 Features
 
 - 🧠 **Modular Object-Oriented Architecture**
-- 🔐 **OAuth 2.0 Integration** — Authenticate users via third-party providers and auto-register them in the database.
+- 🔐 **OAuth 2.0 Integration** — Authenticate users via third-party providers and auto-register them in the database as a system user with name, email and default role as a patient.
 - 🔑 **Role-Based Access Control (RBAC)** — Enforced using JWT tokens for secure API access.
-- 🩺 **Doctor & Patient Management** — Securely manage records and interactions.
+- 🩺 **Doctor & Patient Management** — Securely manage records and interactions with other entities effeciently.
 - 📅 **Appointment Scheduling System** — Avoid conflicts with real-time doctor availability management.
-- 📄 **Medical Record Handling** — Manage confidential medical histories efficiently.
+- 📄 **Medical Record Handling** — Manage confidential medical histories efficiently and only accessible to patient and doctor sharing a common appointment.
 - ⚙️ **Custom CLI Tool** (`console.py`) — Full CRUD capabilities via terminal for all models.
 - 🔁 **Dynamic Environment Config** — Secure loading of DB credentials and secrets from environment variables.
 - 🧱 **Storage Engine Abstraction** — Clean separation of database logic with `db_storage.py` and `file_storage.py`.
@@ -30,12 +30,12 @@ healthcare-scheduler/ ├── api/ │ └── v1/ │ ├── routes/ │
 
 | Model            | Description |
 |------------------|-------------|
-| `BaseModel`       | Parent class for all models (includes ID, timestamps, save/delete logic). |
+| `BaseModel`       | Parent class for all models (includes ID, timestamps, save/delete logic, to_dict). |
 | `Doctor`          | Stores profile data and working availability. |
-| `PatientRecord`   | Tracks patient details and links to medical records. |
+| `Patient`         | Tracks patient details and links to medical records. |
 | `Appointments`    | Manages scheduled meetings between doctors and patients. |
 | `Availability`    | Defines when doctors are available for appointments. |
-| `MedicalRecord`   | Stores confidential medical history of patients. |
+| `MedicalRecord`   | Stores confidential medical history of patients linked to an appointment. |
 | `Exception`       | Handles scheduling edge cases (e.g. doctor out-of-office). |
 
 ---
