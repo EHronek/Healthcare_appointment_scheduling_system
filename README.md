@@ -59,7 +59,7 @@ This design eliminates repetitive CRUD logic and promotes cleaner code throughou
 ## 💻 Command Line Interface — `console.py`
 
 A powerful terminal-based CLI for developers to interact with the system’s data:
-manage (create, update, destroy, etc) objects via a console / command interpreter
+Allows quick management (create, update, destroy, etc) objects via a console / command interpreter in the Backend
 store and persist objects to a file (JSON file)
 
 ### **`NOTE`** PROTOTYPE STILL INCOMPLETE
