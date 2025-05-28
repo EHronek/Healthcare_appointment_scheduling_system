@@ -45,7 +45,7 @@ healthcare-scheduler/ ├── api/ │ └── v1/ │ ├── routes/ │
 The `models/engine/` directory abstracts all database logic:
 
 - `db_storage.py`: 
-  - Defines reusable methods like `.all()`, `.get()`, `.filter_by()`, `.save()`, `.delete()` etc.
+  - Defines reusable methods like `.all()`, `.get()`, `.new()`, `.save()`, `.delete()`, `.count()`, `.find()`, `.check_user()`, `.get_user_by_email()`, `.reload()`, `.get_session()`, `.close()` etc.
   - Manages the SQLAlchemy session and engine instance.
   - Fetches database credentials securely from environment variables.
   
@@ -61,20 +61,43 @@ This design eliminates repetitive CRUD logic and promotes cleaner code throughou
 A powerful terminal-based CLI for developers to interact with the system’s data:
 
 ```bash
-$ python3 console.py
+$ ./console.py
+(HMS_$)
+(HMS_$)
 
-## Sample Commands :
+## Sample Commands to create an object:
+
 # Create a doctor
-create Doctor name="Dr.John" specialization="Dermatology"
+(HMS $) all MyModel
+** class doesn't exist **
+(HMS $) show BaseModel
+** instance id missing **
+(HMS $) show BaseModel My_First_Model
+** no instance found **
+(HMS $) create BaseModel
+49faff9a-6318-451f-87b6-910505c55907
+(HMS $) all BaseModel
+["[BaseModel] (49faff9a-6318-451f-87b6-910505c55907) {'created_at': datetime.datetime(2017, 10, 2, 3, 10, 25, 903293), 'id': '49faff9a-6318-451f-87b6-910505c55907', 'updated_at': datetime.datetime(2017, 10, 2, 3, 10, 25, 903300)}"]
+(HMS $) show BaseModel 49faff9a-6318-451f-87b6-910505c55907
+[BaseModel] (49faff9a-6318-451f-87b6-910505c55907) {'created_at': datetime.datetime(2017, 10, 2, 3, 10, 25, 903293), 'id': '49faff9a-6318-451f-87b6-910505c55907', 'updated_at': datetime.datetime(2017, 10, 2, 3, 10, 25, 903300)}
+(HMS $) destroy
+** class name missing **
+(HMS $) update BaseModel 49faff9a-6318-451f-87b6-910505c55907 first_name "Betty"
+(HMS $) show BaseModel 49faff9a-6318-451f-87b6-910505c55907
+[BaseModel] (49faff9a-6318-451f-87b6-910505c55907) {'first_name': 'Betty', 'id': '49faff9a-6318-451f-87b6-910505c55907', 'created_at': datetime.datetime(2017, 10, 2, 3, 10, 25, 903293), 'updated_at': datetime.datetime(2017, 10, 2, 3, 11, 3, 49401)}
+(HMS $) create BaseModel
+2dd6ef5c-467c-4f82-9521-a772ea7d84e9
+(HMS $) all BaseModel
+["[BaseModel] (2dd6ef5c-467c-4f82-9521-a772ea7d84e9) {'id': '2dd6ef5c-467c-4f82-9521-a772ea7d84e9', 'created_at': datetime.datetime(2017, 10, 2, 3, 11, 23, 639717), 'updated_at': datetime.datetime(2017, 10, 2, 3, 11, 23, 639724)}", "[BaseModel] (49faff9a-6318-451f-87b6-910505c55907) {'first_name': 'Betty', 'id': '49faff9a-6318-451f-87b6-910505c55907', 'created_at': datetime.datetime(2017, 10, 2, 3, 10, 25, 903293), 'updated_at': datetime.datetime(2017, 10, 2, 3, 11, 3, 49401)}"]
+(HMS $) destroy BaseModel 49faff9a-6318-451f-87b6-910505c55907
+(HMS $) show BaseModel 49faff9a-6318-451f-87b6-910505c55907
+** no instance found **
+(HMS $)
 
-# Show all appointments
-all Appointment
+```
 
-# Update a patient record
-update PatientRecord 1234-uuid name="Jane Doe"
 
-# Delete a doctor
-destroy Doctor 1234-uuid
+
 
 # 🔐 Authentication & Security
 OAuth 2.0:
