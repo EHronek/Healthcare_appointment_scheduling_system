@@ -111,28 +111,30 @@ $ ./console.py
 
 
 # 🔐 Authentication & Security
-OAuth 2.0:
+**OAuth 2.0**:
+- Supports third-party login
+- Auto-creates a new user in DB if not existing
 
-Supports third-party login
-
-Auto-creates a new user in DB if not existing
-
-JWT-based RBAC:
-
-Protects API endpoints based on user roles (admin, doctor, patient)
-
-Validates access tokens for every secure operation
+# JWT-based RBAC:
+- Protects API endpoints based on user roles (admin, doctor, patient)
+- Validates access tokens for every secure operation
 
 
 
 
-🛠️ Setup & Usage
-✅ Environment Variables Required
-Variable	Purpose
-DB_USER	MySQL username
-DB_PWD	MySQL password
-DB_HOST	Host address (e.g. localhost)
-DB_NAME	Database name
+# 🛠️ Setup & Usage
+**✅ Environment Variables Required:**
+```bash
+$ export HMS_MYSQL_USER=database_username
+$ export HMS_MYSQL_PWD=database_password
+$ export HMS_MYSQL_HOST=localhost
+$ export HMS_MYSQL_DB=database_name
+$ export HMS_TYPE_STORAGE=db/fs
+$ export JWT_SECRET_KEY="jwt_Secret_key"
+$ export CLIENT_ID="google_api_client_id"
+$ export CLIENT_SECRET="google_api_client_secret"
+```
+
 
 
 
