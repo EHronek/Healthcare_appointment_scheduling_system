@@ -60,12 +60,13 @@ This design eliminates repetitive CRUD logic and promotes cleaner code throughou
 
 A powerful terminal-based CLI for developers to interact with the system’s data:
 
+
+
+## Sample Commands to create an object:
 ```bash
 $ ./console.py
 (HMS_$)
 (HMS_$)
-
-## Sample Commands to create an object:
 
 # Create a doctor
 (HMS $) all MyModel
@@ -95,8 +96,6 @@ $ ./console.py
 (HMS $)
 
 ```
-
-
 
 
 # 🔐 Authentication & Security
