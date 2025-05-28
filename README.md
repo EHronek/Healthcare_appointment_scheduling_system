@@ -64,7 +64,7 @@ store and persist objects to a file (JSON file)
 
 ### **`NOTE`** PROTOTYPE STILL INCOMPLETE
 
-## Sample Commands to create an object:
+## Sample Commands to CRUD an object:
 ```bash
 $ ./console.py
 (HMS_$)
