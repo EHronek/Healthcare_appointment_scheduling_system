@@ -135,11 +135,8 @@ def get_patient_appointment(patient_id):
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
     
-    for appointment in patient.appointments:
-        storage.delete(appointment)
-        storage.save()
-
-    storage.delete(patient)
-    storage.save()
+    if not patient.appointments:
+        return jsonify({"error": "appointments not found"})
+    return jsonify([appointment.to_dict for appointment in patient.appointments]), 200
     
     

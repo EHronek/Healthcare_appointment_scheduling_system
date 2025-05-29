@@ -189,7 +189,11 @@ class HMSCommand(cmd.Cmd):
                 print("** instance id missing **")
         else:
             print("** class doesn't exist **")
-                  
+
+    def do_count(self, class_name):
+        """Retrieve the number of instances of a class"""
+        count = sum(1 for key in models.storage.all() if key.startswith(class_name))
+        print(count)     
 
 if __name__ == "__main__":
     HMSCommand().cmdloop()
