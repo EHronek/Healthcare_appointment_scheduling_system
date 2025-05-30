@@ -14,7 +14,7 @@ class Patient(BaseModel, Base):
         last_name = Column(String(128), nullable=False)
         phone_number = Column(String(128), nullable=False)
         email = Column(String(128), nullable=False)
-        insurance_number = Column(String(128), unique=True, nullable=False)
+        insurance_number = Column(String(128), unique=True, nullable=False) # TODO encrypt PII 
         insurance_provider = Column(String(128), nullable=True)
         user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
 
