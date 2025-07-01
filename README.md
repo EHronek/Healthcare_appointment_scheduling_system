@@ -4,6 +4,18 @@ A robust and secure backend system built with **Python**, **Flask**, and **SQLAl
 
 ---
 
+# ⚙️ System Architecture
+### 🧩 Components
+Backend: Flask + SQLAlchemy ORM
+
+Database: MySQL
+
+Auth: OAuth 2.0 (Google), JWT
+
+Frontend: (Optional) React or basic HTML/CSS/JS
+
+---
+
 ## 🚀 Features
 
 - 🧠 **Modular Object-Oriented Architecture**
@@ -111,14 +123,23 @@ $ ./console.py
 
 
 # 🔐 Authentication & Security
-**OAuth 2.0**:
+**OAuth 2.0 with Google for secure login**:
 - Supports third-party login
 - Auto-creates a new user in DB if not existing
 
 # JWT-based RBAC:
 - Protects API endpoints based on user roles (admin, doctor, patient)
 - Validates access tokens for every secure operation
+- CSRF protection for forms and crititcal endpoints
 
+# Security Measures
+- JWT token expiration + refresh flow
+- Role-based access (admin, patient, doctor)
+- CSRF tokens for form-based auth
+- Input validation on all API endpoints
+
+
+# API Documentation
 
 
 

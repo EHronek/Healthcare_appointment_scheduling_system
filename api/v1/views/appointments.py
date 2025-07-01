@@ -64,7 +64,8 @@ def create_appointment():
                                            scheduled_time,
                                            duration,
                                            working_hours_start,
-                                           working_hours_end
+                                           working_hours_end,
+                                           appointment_id_to_ignore=None
                         )
         
         if not is_available:
@@ -75,7 +76,7 @@ def create_appointment():
             patient_id=patient.id,
             doctor_id=doctor.id,
             scheduled_time=scheduled_time,
-            duration=timedelta(minutes=duration),
+            duration=duration,
             status='scheduled'
         )
 

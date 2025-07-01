@@ -121,7 +121,7 @@ def authorize():
         #session['user_id'] = user.id
         #user = models.storage.get(User, session['user_id'])
 
-        print(user)
+        # print(user)
         return jsonify(access_token=access_token, refresh_token=refresh_token), 200
     
     except Exception as e:

@@ -2,7 +2,7 @@
 """Defines the Appointment class"""
 import models
 from models.base_model import Base, BaseModel
-from sqlalchemy import Column, String, ForeignKey, DateTime, Time, Enum
+from sqlalchemy import Column, String, ForeignKey, DateTime, Time, Enum, Integer
 from sqlalchemy.orm import relationship
 
 
@@ -13,7 +13,7 @@ class Appointment(BaseModel, Base):
         patient_id = Column(String(60), ForeignKey('patients.id'), nullable=False)
         doctor_id = Column(String(60), ForeignKey('doctors.id'), nullable=False)
         scheduled_time = Column(DateTime, nullable=False)
-        duration = Column(Time, nullable=False)
+        duration = Column(Integer, nullable=False)
         status = Column(Enum('scheduled', 'cancelled', 'completed', name='appointment_status'), default='scheduled', nullable=False)
 
         patient = relationship("Patient", back_populates='appointments')
