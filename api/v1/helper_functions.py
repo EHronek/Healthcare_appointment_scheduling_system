@@ -13,10 +13,6 @@ from sqlalchemy import func, String, and_, text
 from models.exception import Exception as DoctorException
 
 
-
-
-
-
 # Constants
 MIN_APPOINTMENT_DURATION = 15
 MAX_APPOINTMENT_DURATION = 120
