@@ -8,7 +8,7 @@ from models.availability import Availability
 from models.doctor import Doctor
 from models import storage
 from datetime import datetime, time, timedelta
-import pytz
+import re
 from sqlalchemy import func, String, and_, text
 from models.exception import Exception as DoctorException
 
@@ -161,5 +161,19 @@ def validate_appointment_data(data):
                 errors['time'] = "Appointment must be scheduled at least 30 minutes in advance"
         except ValueError:
             errors['time'] = "Invalid time format (use ISO 8601)"
+
+    return errors
+
+def validate_medical_record(data):
+    errors = {}
+
+    # notes validation
+    if 'notes' in data and len(data['notes']) > 5000:
+        errors['notes'] = "Notes exceed 5000 character limit"
+
+    # Prescription format validation
+    if 'prescriptions' in data:
+        if not re.match(r'^[a-zA-Z0-9\s\.,;:-]+$', data['prescriptions']):
+            errors['prescriptions'] = "Invalid characters in prescriptions"
 
     return errors

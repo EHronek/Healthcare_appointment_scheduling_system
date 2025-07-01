@@ -29,8 +29,77 @@ def get_doctor_by_id(doctor_id):
     doctor = storage.get(Doctor, doctor_id)
 
     if not doctor:
-        return jsonify({"error": "doctor not found"})
+        return jsonify({"error": "doctor not found"}), 404
     return jsonify(doctor.to_dict()), 200
+
+
+@app_views.route('/doctors/<string:doctor_id>/availabilities', methods=['GET'], strict_slashes=False)
+@jwt_required()
+def get_doctor_availabilities(doctor_id):
+    """Retrieve all the doctor availabilities"""
+    doctor = storage.get(Doctor, doctor_id)
+
+    if not doctor:
+        return jsonify({"error": "doctor not found"}), 404
+    doctor_avails = doctor.availability
+    if len(doctor_avails) == 0:
+        return jsonify({"message": "availability empty"}), 200
+    if doctor_avails:
+        for avail in doctor_avails:
+            return jsonify(avail.to_dict()), 200
+        
+
+@app_views.route('/doctors/<string:doctor_id>/appointments', methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_doctor_appointments(doctor_id):
+    """retrieves a specific doctor appointments data"""
+    doctor = storage.get(Doctor, doctor_id)
+
+    if not doctor:
+        return jsonify({"error": "doctor not found"}), 404
+    doctor_appointments = doctor.appointments
+    if len(doctor.appointments) == 0:
+        return jsonify({"message": "doctor's appointments empty"}), 200
+    if doctor_appointments:
+        for appointment in doctor_appointments:
+            return jsonify(appointment.to_dict())
+
+
+@app_views.route('/doctors/<string:doctor_id>/exceptions', methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_doctor_exceptions(doctor_id):
+    """Retrieves a specific doctor exceptions"""
+    doctor = storage.get(Doctor, doctor_id)
+
+    if not doctor:
+        return jsonify({"error": "doctor not found"}), 404
+    doctor_exceptions = doctor.exceptions
+
+    if len(doctor_exceptions) == 0:
+        return jsonify({"message": "doctor's exceptions is empty"}), 200
+    if doctor_exceptions:
+        for exception in doctor_exceptions:
+            return jsonify(exception.to_dict()), 200
+        
+
+@app_views.route('/doctors/<string:doctor_id>/medical_records', methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_doctor_medical_records(doctor_id):
+    """Retrieve medical records for all doctor appointments"""
+    doctor = storage.get(Doctor, doctor_id)
+
+    if not doctor:
+        return jsonify({"error": "doctor not found"}), 404
+    
+    doctor_medical_records = doctor.medical_records
+
+    if len(doctor_medical_records) == 0:
+        return jsonify({"message": "medical records empty"}), 200
+    
+    if doctor_medical_records:
+        for medical_record in doctor_medical_records:
+            return jsonify(medical_record.to_dict()), 200
+
 
 
 @app_views.route("/doctors", methods=["POST"], strict_slashes=False)
@@ -108,6 +177,3 @@ def delete_doctor(doctor_id):
     except Exception as e:
         print("Error: ", e)
         return jsonify({"error": "something went wrong"}), 500
-
-    
-

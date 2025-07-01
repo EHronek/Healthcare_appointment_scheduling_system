@@ -135,7 +135,7 @@ def get_appointment(appointment_id):
         "patient_id": appointment.patient_id,
         "doctor_id": appointment.doctor_id,
         "scheduled_time": appointment.scheduled_time.isoformat(),
-        "duration": appointment.duration.total_seconds() / 60,
+        "duration": appointment.duration,
         "status": appointment.status
 
     }), 200
@@ -156,7 +156,7 @@ def cancel_appointment(appointment_id):
     current_user = storage.get(User, current_user_id)
 
     if not current_user:
-        return jsonify({"error": "user not found"})
+        return jsonify({"error": "user not found"}), 400
     
     user_role = current_user.role
 
@@ -164,11 +164,11 @@ def cancel_appointment(appointment_id):
     if user_role == 'patient':
         patient = sess.query(Patient).filter(Patient.user_id==current_user_id).first()
         if not patient or appointment.patient_id != patient.id:
-            return jsonify({"error": "Unauthorized"}), 403
+            return jsonify({"error": "Unauthorized"}), 401
     elif user_role == 'doctor':
         doctor = sess.query(Doctor).filter(Doctor.user_id==current_user_id).first()
         if not doctor or appointment.doctor_id != doctor.id:
-            return jsonify({"error": "Unauthorized"}), 403
+            return jsonify({"error": "Unauthorized"}), 401
 
     # Business rules
     time_until_appointment = appointment.scheduled_time - datetime.now()
@@ -190,6 +190,114 @@ def cancel_appointment(appointment_id):
         storage.save()
         return  jsonify({"message": "Appointment cancelled successfully"}), 200
     except Exception as e:
-        return jsonify({"error": "error while saving"}), 500
+        return jsonify({"error": "error while saving"}), 500    
 
+@app_views.route('appointments/<string:appointment_id>/complete', methods=["PUT"], strict_slashes=False)
+@jwt_required()
+@role_required('doctor')
+def complete_appointment(appointment_id):
+    appointment = storage.get(Appointment, appointment_id)
+
+    if not appointment:
+        return jsonify({"error": "appointment not found"}), 404
     
+    current_user_id = get_jwt_identity()
+
+    doctor = storage.get(Doctor, current_user_id)
+    if not doctor:
+        return jsonify({"error": "user not found"}), 404
+
+    # Authorization - only attending doctor can complete
+    if appointment.doctor_id != doctor.id:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    # Can only complete scheduled appointments
+    if appointment.status != 'scheduled':
+        return jsonify({"error": f"Cannot complete {appointment.status} appointment"}), 400
+    
+    # can't complete future appointments
+    if appointment.scheduled_time > datetime.now():
+        return jsonify({"error": "Cannot complete future appointments"}), 400
+    
+    appointment.status = 'completed'
+
+    storage.save(appointment)
+
+    return jsonify({"message": "Appointment marked as completed"}), 200
+
+
+@app_views.route('/appointments/available_slots', methods=['GET'], strict_slashes=False)
+@jwt_required()
+def get_available_slots():
+    sess = storage.get_session()
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "not a json"}), 400
+    
+    doctor_id = data.get('doctor_id', None)
+    date = data.get('date', None)
+    
+    if not doctor_id or not date:
+        return jsonify({"error": "doctor_id and date parameters required"}), 400
+    
+    try:
+         target_date = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({"error": "Invalid date format (use YYYY-MM-DD)"}), 400
+    
+    # Get doctor's availability for this day
+    day_of_week = target_date.strftime('%A')
+    availability = sess.query(Availability).filter_by(
+        doctor_id=doctor_id,
+        day_of_week=day_of_week
+    ).all()
+
+    # check for exceptions
+    exception = sess.query(Exception).filter_by(
+        doctor_id=doctor_id,
+        date=target_date
+    ).first()
+
+    if exception and not exception.is_available:
+        return jsonify({"available": False, "reason": "Doctor unavailable on this date"}), 200
+    
+    # Get booked slots
+    start_of_day = datetime.combine(target_date, datetime.min.time())
+    end_of_day = datetime.combine(target_date, datetime.max.time())
+    
+    booked_slots = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.status == 'scheduled',
+        Appointment.scheduled_time.between(start_of_day, end_of_day)
+    ).all()
+    
+    # Generate available slots (30-minute intervals)
+    available_slots = []
+    for avail in availability:
+        current_time = datetime.combine(target_date, avail.start_time)
+        end_time = datetime.combine(target_date, avail.end_time)
+        
+        while current_time + timedelta(minutes=30) <= end_time:
+            slot_end = current_time + timedelta(minutes=30)
+            
+            # Check if slot is booked
+            is_booked = any(
+                a.scheduled_time < slot_end and 
+                a.scheduled_time + a.duration > current_time
+                for a in booked_slots
+            )
+            
+            if not is_booked and current_time > datetime.now():
+                available_slots.append({
+                    "start": current_time.isoformat(),
+                    "end": slot_end.isoformat()
+                })
+            
+            current_time += timedelta(minutes=30)
+    
+    return jsonify({
+        "date": date,
+        "doctor_id": doctor_id,
+        "available_slots": available_slots
+    })
