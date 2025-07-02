@@ -12,6 +12,7 @@ from models.patient import Patient
 from models.availability import Availability
 from datetime import datetime, time, timedelta
 from models.user import User
+from models.exception import Exception as Doctor_Exception
 
 
 @app_views.route("/appointments", methods=["POST"], strict_slashes=False)
@@ -141,6 +142,24 @@ def get_appointment(appointment_id):
     }), 200
 
 
+@app_views.route("/appointments", methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_appointments():
+    """Get all appointments"""
+    current_user_id = get_jwt_identity()
+    current_user = storage.get(User, current_user_id)
+    
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    appointments = storage.all(Appointment).values()
+
+    if not appointments:
+        return jsonify({"error": "appointments not found"}), 404
+    
+    return jsonify([appointment.to_dict() for appointment in appointments]), 200
+
+
 @app_views.route("/appointments/<string:appointment_id>/cancel", methods=["PUT"], strict_slashes=False)
 @jwt_required()
 @role_required('doctor', 'patient')
@@ -202,8 +221,14 @@ def complete_appointment(appointment_id):
         return jsonify({"error": "appointment not found"}), 404
     
     current_user_id = get_jwt_identity()
+    current_user = storage.get(User, current_user_id)
 
-    doctor = storage.get(Doctor, current_user_id)
+    if current_user.role != 'doctor':
+        return jsonify({"error": "Unauthorized user"}), 401
+    
+    sess = storage.get_session()
+    doctor = sess.query(Doctor).filter_by(user_id=current_user_id).first()
+
     if not doctor:
         return jsonify({"error": "user not found"}), 404
 
@@ -221,7 +246,7 @@ def complete_appointment(appointment_id):
     
     appointment.status = 'completed'
 
-    storage.save(appointment)
+    storage.save()
 
     return jsonify({"message": "Appointment marked as completed"}), 200
 
@@ -254,7 +279,7 @@ def get_available_slots():
     ).all()
 
     # check for exceptions
-    exception = sess.query(Exception).filter_by(
+    exception = sess.query(Doctor_Exception).filter_by(
         doctor_id=doctor_id,
         date=target_date
     ).first()
@@ -266,11 +291,12 @@ def get_available_slots():
     start_of_day = datetime.combine(target_date, datetime.min.time())
     end_of_day = datetime.combine(target_date, datetime.max.time())
     
-    booked_slots = Appointment.query.filter(
+    booked_slots = sess.query(Appointment).filter(
         Appointment.doctor_id == doctor_id,
         Appointment.status == 'scheduled',
         Appointment.scheduled_time.between(start_of_day, end_of_day)
     ).all()
+    
     
     # Generate available slots (30-minute intervals)
     available_slots = []

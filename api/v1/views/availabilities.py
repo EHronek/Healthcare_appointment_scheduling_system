@@ -32,6 +32,7 @@ def get_availability(availability_id):
     return jsonify(availability.to_dict()), 200
 
 
+
 @app_views.route("/availabilities", methods=["POST"], strict_slashes=False)
 @jwt_required()
 @role_required('admin', 'doctor')
@@ -51,12 +52,23 @@ def create_availability():
     is_valid_id = storage.find(Doctor, data.get('doctor_id'))
     if not is_valid_id:
         return jsonify({"error": "doctor id is invalid"}), 400
+    
+    # Convert time strings to time objects
+    try:
+        from datetime import time
+        start_time = time.fromisoformat(data['start_time'])
+        end_time = time.fromisoformat(data['end_time'])
+    except ValueError as e:
+        return jsonify({"error": f"Invalid time format: {str(e)}"}), 400
+    
+    print(type(start_time))
+    print(type(end_time))
         
     new_avail = Availability(
         doctor_id=data.get('doctor_id'),
         day_of_week=data.get('day_of_week'),
-        start_time=data.get('start_time'),
-        end_time=data.get('end_time')
+        start_time=start_time,
+        end_time=end_time
     )
 
     try:
@@ -65,7 +77,7 @@ def create_availability():
         return jsonify(new_avail.to_dict()), 201
     except Exception as e:
         print(e)
-        return jsonify({"error": f"Error saving"}), 500
+        return jsonify({"error": f"Error saving => {e}"}), 500
 
 
 @app_views.route("/availabilities/<string:availability_id>", methods=["PUT"], strict_slashes=False)
@@ -91,6 +103,20 @@ def update_availability(availability_id):
 
     for k, v in data.items():
         if k not in keys_to_ignore:
+            if k == 'start_time':
+                try:
+                    from datetime import time
+                    start_time = time.fromisoformat(data['start_time'])
+                    v = start_time
+                except ValueError as e:
+                    return jsonify({"error": f"Invalid time format: {str(e)}"}), 400
+            if k == 'end_time':
+                try:
+                    from datetime import time
+                    end_time = time.fromisoformat(data['end_time'])
+                    v = end_time
+                except ValueError as e:
+                    return jsonify({"error": f"Invalid time format: {str(e)}"}), 400
             setattr(availability, k, v)
 
     try:
@@ -116,5 +142,3 @@ def delete_availability(availability_id):
     except Exception as e:
         print("error deleting", e)
         return jsonify({"error": "deletion not succefull"})
-    
-

@@ -2,7 +2,7 @@
 """Endpoint for Exception"""
 from models import storage
 from flask import jsonify, request
-from models.exception import Exception
+from models.exception import Exception as Doctor_Exception
 from models.doctor import Doctor
 from api.v1.views import app_views
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -14,7 +14,7 @@ from api.v1.helper_functions import role_required
 @jwt_required()
 def get_all_exceptions():
     """Gets all exceptions in the database"""
-    exceptions = storage.all(Exception).values()
+    exceptions = storage.all(Doctor_Exception).values()
 
     if not exceptions:
         return jsonify({"error": "exceptions not found"}), 404
@@ -26,7 +26,7 @@ def get_all_exceptions():
 @jwt_required()
 def get_exception_data(exception_id):
     """Retrieves a specific exception data"""
-    exception = storage.get(Exception, exception_id)
+    exception = storage.get(Doctor_Exception, exception_id)
 
     if not exception:
         return jsonify({"error": "exception not found"}), 404
@@ -53,7 +53,7 @@ def create_exception():
     if not is_valid_id:
         return jsonify({"error": "doctor id is invalid"}), 400
     
-    new_exception = Exception(
+    new_exception = Doctor_Exception(
         doctor_id=data.get('doctor_id'),
         date=data.get('date'),
         is_available=data.get('is_available')
@@ -64,7 +64,7 @@ def create_exception():
         return jsonify(new_exception.to_dict()), 201
     except Exception as e:
         print(e)
-        return jsonify({"error": f"Error saving"}), 500
+        return jsonify({"error": f"Error saving => {e}"}), 500
     
 
 @app_views.route('/exceptions/<string:exception_id>', methods=["PUT"], strict_slashes=False)
@@ -72,7 +72,7 @@ def create_exception():
 @role_required('admin', 'doctor')
 def update_exception(exception_id):
     """updates a specific exception based on exception id"""
-    exception = storage.get(Exception, exception_id)
+    exception = storage.get(Doctor_Exception, exception_id)
 
     if not exception:
         return jsonify({"error": "exception not found"}), 404
@@ -100,7 +100,7 @@ def update_exception(exception_id):
 @role_required('admin', 'doctor')
 def delete_exception(exception_id):
     """Deletes a specific exception from the database"""
-    exception = storage.get(Exception, exception_id)
+    exception = storage.get(Doctor_Exception, exception_id)
 
     if not exception:
         return jsonify({"error": "exception not found"}), 404

@@ -12,6 +12,7 @@ from flask_session import Session
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_cors import CORS
 from api.v1.helper_functions import generate_tokens_for_user
+from datetime import timedelta
 
 
 app = Flask(__name__)
@@ -23,6 +24,9 @@ app.secret_key = os.getenv('SECRET_KEY')
 # jwt setup
 jwt = JWTManager(app)
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)  # 24 hour expiration
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 
 # Session configuration (required for nonce)
 app.config['SESSION_TYPE'] = 'filesystem'

@@ -45,8 +45,7 @@ def get_doctor_availabilities(doctor_id):
     if len(doctor_avails) == 0:
         return jsonify({"message": "availability empty"}), 200
     if doctor_avails:
-        for avail in doctor_avails:
-            return jsonify(avail.to_dict()), 200
+        return jsonify([avail.to_dict() for avail in doctor_avails]), 200
         
 
 @app_views.route('/doctors/<string:doctor_id>/appointments', methods=["GET"], strict_slashes=False)
@@ -61,8 +60,7 @@ def get_doctor_appointments(doctor_id):
     if len(doctor.appointments) == 0:
         return jsonify({"message": "doctor's appointments empty"}), 200
     if doctor_appointments:
-        for appointment in doctor_appointments:
-            return jsonify(appointment.to_dict())
+        return jsonify([appointment.to_dict() for appointment in doctor_appointments])
 
 
 @app_views.route('/doctors/<string:doctor_id>/exceptions', methods=["GET"], strict_slashes=False)
@@ -78,8 +76,7 @@ def get_doctor_exceptions(doctor_id):
     if len(doctor_exceptions) == 0:
         return jsonify({"message": "doctor's exceptions is empty"}), 200
     if doctor_exceptions:
-        for exception in doctor_exceptions:
-            return jsonify(exception.to_dict()), 200
+        return jsonify([exception.to_dict() for exception in doctor_exceptions]), 200
         
 
 @app_views.route('/doctors/<string:doctor_id>/medical_records', methods=["GET"], strict_slashes=False)
@@ -97,8 +94,7 @@ def get_doctor_medical_records(doctor_id):
         return jsonify({"message": "medical records empty"}), 200
     
     if doctor_medical_records:
-        for medical_record in doctor_medical_records:
-            return jsonify(medical_record.to_dict()), 200
+        return jsonify([medical_record.to_dict() for medical_record in doctor_medical_records]), 200
 
 
 

@@ -13,8 +13,8 @@ from datetime import datetime
 from models.appointment import Appointment
 
 
-@app_views.route("medical-records", methods=["POST"], strict_slashes=False)
-@jwt_required
+@app_views.route("/medical-records", methods=["POST"], strict_slashes=False)
+@jwt_required()
 @role_required('doctor', 'admin')
 def create_medical_record():
     """Creates a medical record"""
@@ -28,12 +28,13 @@ def create_medical_record():
         return jsonify({"error": "Unauthorized"}), 401
     
     doctors = storage.all(Doctor).values()
-    doctor = None
     for doctor in doctors:
         if doctor.user == current_user:
             doctor = doctor
 
-    data = request.get_json(silent=True)
+    print(doctor.id)
+
+    data = request.get_json(silent=False)
     if not data:
         return jsonify({"error": "not a json"}), 400
     
@@ -48,10 +49,12 @@ def create_medical_record():
     # Verify appointment exists and belongs to this doctor
     sess = storage.get_session()
     appointment = sess.query(Appointment).filter_by(
-        id=data['appointment_id'],
-        doctor_id=doctor.id,
-        patient_id=data['patient_id']
+        id=str(data['appointment_id']),
+        doctor_id=str(doctor.id),
+        patient_id=str(data['patient_id'])
     ).first()
+
+    print(appointment)
 
     if not appointment:
         return jsonify({"error": "Appointment not found or unauthorized"}), 404
@@ -175,7 +178,7 @@ def delete_medical_record(record_id):
     return jsonify({"message": "Record deleted"}), 200
 
 
-@app_views.route('/medical-records/patient/<string:patient_id>', method=['GET'])
+@app_views.route('/medical-records/patient/<string:patient_id>', methods=['GET'])
 @jwt_required()
 def get_patient_record(patient_id):
     current_user_id = get_jwt_identity()
@@ -214,7 +217,7 @@ def get_patient_record(patient_id):
     } for r in records])
 
 
-@app_views.route('/medical-records/appointments/<string:appointment_id>', method=["GET"])
+@app_views.route('/medical-records/appointments/<string:appointment_id>', methods=["GET"])
 @jwt_required()
 def get_appointment_record(appointment_id):
     sess = storage.get_session()

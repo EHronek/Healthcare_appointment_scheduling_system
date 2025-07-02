@@ -11,3 +11,4 @@ from api.v1.views.doctors import *
 from api.v1.views.exceptions import *
 from api.v1.views.availabilities import *
 from api.v1.views.appointments import *
+from api.v1.views.medical_records import *
