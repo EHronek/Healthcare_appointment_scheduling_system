@@ -310,7 +310,7 @@ def get_available_slots():
             # Check if slot is booked
             is_booked = any(
                 a.scheduled_time < slot_end and 
-                a.scheduled_time + a.duration > current_time
+                a.scheduled_time + timedelta(a.duration) > current_time
                 for a in booked_slots
             )
             

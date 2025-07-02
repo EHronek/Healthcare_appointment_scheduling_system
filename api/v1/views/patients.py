@@ -137,6 +137,4 @@ def get_patient_appointment(patient_id):
     
     if not patient.appointments:
         return jsonify({"error": "appointments not found"})
-    return jsonify([appointment.to_dict for appointment in patient.appointments]), 200
-    
-    
+    return jsonify([appointment.to_dict for appointment in patient.appointments]), 200  

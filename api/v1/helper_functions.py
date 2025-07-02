@@ -139,7 +139,7 @@ def is_doctor_available(doctor_id, start_time, duration, working_hours_start, wo
 def validate_appointment_data(data):
     errors = {}
 
-    required_fields = ['doctor_id', 'scheduled_time', 'duration', 'start_time', 'end_time']
+    required_fields = ['doctor_id', 'scheduled_time', 'duration']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         errors['missing'] = f"Required fields: {', '.join(missing_fields)}"
