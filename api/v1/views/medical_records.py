@@ -32,7 +32,6 @@ def create_medical_record():
         if doctor.user == current_user:
             doctor = doctor
 
-    print(doctor.id)
 
     data = request.get_json(silent=False)
     if not data:
