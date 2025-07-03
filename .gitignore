@@ -41,3 +41,4 @@ htmlcov/
 # Ignore uploads (if you store temporary user uploads locally)
 uploads/
 media/
+.venv/

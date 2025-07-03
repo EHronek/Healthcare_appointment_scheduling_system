@@ -43,7 +43,7 @@ class DBStorage:
                                       format(HMS_MYSQL_USER,
                                              HMS_MYSQL_PWD,
                                              HMS_MYSQL_HOST,
-                                             HMS_MYSQL_DB), pool_pre_ping=True)
+                                             HMS_MYSQL_DB), pool_pre_ping=True, echo=True)
         
     def all(self, cls=None):
         """
