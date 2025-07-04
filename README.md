@@ -5,7 +5,9 @@ A robust and secure backend system built with **Python**, **Flask**, and **SQLAl
 ---
 
 # ⚙️ System Architecture
+
 ### 🧩 Components
+
 Backend: Flask + SQLAlchemy ORM
 
 Database: MySQL
@@ -34,21 +36,19 @@ Frontend: (Optional) React or basic HTML/CSS/JS
 
 healthcare-scheduler/ ├── api/ │ └── v1/ │ ├── routes/ │ └── app.py ├── auth/ │ ├── oauth.py │ └── jwt_handler.py ├── config/ │ └── env.py ├── console.py ├── models/ │ ├── base_model.py │ ├── doctor.py │ ├── patient_record.py │ ├── appointments.py │ ├── availability.py │ ├── exception.py │ ├── medical_record.py │ └── engine/ │ ├── db_storage.py │ └── file_storage.py ├── requirements.txt └── README.md
 
-
-
 ---
 
 ## 🧩 Core Models
 
-| Model            | Description |
-|------------------|-------------|
-| `BaseModel`       | Parent class for all models (includes ID, timestamps, save/delete logic, to_dict). |
-| `Doctor`          | Stores profile data and working availability. |
-| `Patient`         | Tracks patient details and links to medical records. |
-| `Appointments`    | Manages scheduled meetings between doctors and patients. |
-| `Availability`    | Defines when doctors are available for appointments. |
-| `MedicalRecord`   | Stores confidential medical history of patients linked to an appointment. |
-| `Exception`       | Handles scheduling edge cases (e.g. doctor out-of-office). |
+| Model           | Description                                                                        |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `BaseModel`     | Parent class for all models (includes ID, timestamps, save/delete logic, to_dict). |
+| `Doctor`        | Stores profile data and working availability.                                      |
+| `Patient`       | Tracks patient details and links to medical records.                               |
+| `Appointments`  | Manages scheduled meetings between doctors and patients.                           |
+| `Availability`  | Defines when doctors are available for appointments.                               |
+| `MedicalRecord` | Stores confidential medical history of patients linked to an appointment.          |
+| `Exception`     | Handles scheduling edge cases (e.g. doctor out-of-office).                         |
 
 ---
 
@@ -56,11 +56,10 @@ healthcare-scheduler/ ├── api/ │ └── v1/ │ ├── routes/ │
 
 The `models/engine/` directory abstracts all database logic:
 
-- `db_storage.py`: 
+- `db_storage.py`:
   - Defines reusable methods like `.all()`, `.get()`, `.new()`, `.save()`, `.delete()`, `.count()`, `.find()`, `.check_user()`, `.get_user_by_email()`, `.reload()`, `.get_session()`, `.close()` etc.
   - Manages the SQLAlchemy session and engine instance.
   - Fetches database credentials securely from environment variables.
-  
 - `file_storage.py`:
   - Placeholder for future JSON-based storage support.
 
@@ -77,6 +76,7 @@ store and persist objects to a file (JSON file)
 ### **`NOTE`** PROTOTYPE STILL INCOMPLETE
 
 ## Sample Commands to CRUD an object:
+
 ```bash
 $ ./console.py
 (HMS_$)
@@ -113,7 +113,7 @@ $ ./console.py
 (HMS $)
 (HMS $) User.count()
 2
-(HMS $)  
+(HMS $)
 (HMS $) User.show("246c227a-d5c1-403d-9bc7-6a47bb9f0f68")
 [User] (246c227a-d5c1-403d-9bc7-6a47bb9f0f68) {'first_name': 'Betty', 'last_name': 'Bar', 'created_at': datetime.datetime(2017, 9, 28, 21, 12, 19, 611352), 'updated_at': datetime.datetime(2017, 9, 28, 21, 12, 19, 611363), 'password': '63a9f0ea7bb98050796b649e85481845', 'email': 'airbnb@mail.com', 'id': '246c227a-d5c1-403d-9bc7-6a47bb9f0f68'}
 (HMS $) User.show("Bar")
@@ -121,30 +121,42 @@ $ ./console.py
 
 ```
 
-
 # 🔐 Authentication & Security
+
 **OAuth 2.0 with Google for secure login**:
+
 - Supports third-party login
 - Auto-creates a new user in DB if not existing
 
 # JWT-based RBAC:
+
 - Protects API endpoints based on user roles (admin, doctor, patient)
 - Validates access tokens for every secure operation
 - CSRF protection for forms and crititcal endpoints
 
 # Security Measures
+
 - JWT token expiration + refresh flow
 - Role-based access (admin, patient, doctor)
 - CSRF tokens for form-based auth
 - Input validation on all API endpoints
 
-
 # API Documentation
 
+This system provides a RESTful API for managing healthcare appointments, doctors, patients, availabilities, exceptions, and medical records.
 
+### 🔐 Authentication
+
+The API uses JWT Bearer tokens for authentication. Include the token in the request header:
+
+```json
+Authorization: Bearer <your_jwt_token>
+```
 
 # 🛠️ Setup & Usage
+
 **✅ Environment Variables Required:**
+
 ```bash
 $ export HMS_MYSQL_USER=database_username
 $ export HMS_MYSQL_PWD=database_password
@@ -155,8 +167,3 @@ $ export JWT_SECRET_KEY="jwt_Secret_key"
 $ export CLIENT_ID="google_api_client_id"
 $ export CLIENT_SECRET="google_api_client_secret"
 ```
-
-
-
-
-

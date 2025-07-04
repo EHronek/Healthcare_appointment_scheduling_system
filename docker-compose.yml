@@ -23,7 +23,7 @@ services:
       - MYSQL_USER=${HMS_MYSQL_USER}
       - MYSQL_PASSWORD=${HMS_MYSQL_PWD}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
