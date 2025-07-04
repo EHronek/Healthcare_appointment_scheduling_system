@@ -166,7 +166,7 @@ http://localhost:5000/api/v1
 
 ### 📚 Endpoints Overview
 
-| **RESOURCE** | **METHODS** | **DESCRIPTION** |
+| **RESOURCE** | **METHODS** | **DESCRIPTION**
 |---------------------------------------------
 | /appointments | GET, POST, PUT, DELETE | Manage appointments |
 | /availabilities | GET, POST, PUT, DELETE | Manage doctor availability times |
@@ -177,6 +177,189 @@ http://localhost:5000/api/v1
 | /users | GET, POST, PUT, DELETE | Manage user accounts |
 
 ---
+
+### 📋 Detailed Endpoints
+
+**1. Appointments**
+
+- GET /appointments
+  Get all appointments (requires authentication)
+- POST /appointments
+  Create a new appointment
+
+```json
+{
+  "doctor_id": "string",
+  "patient_id": "string",
+  "scheduled_time": "ISO8601 datetime",
+  "status": "scheduled/cancelled/completed",
+  "duration": "integer (minutes)"
+}
+```
+
+- GET /appointments/<appointment_id>
+  Get a specific appointment by ID
+- PUT /appointments/<appointment_id>
+  Update an existing appointment
+- PUT /appointments/<appointment_id>/cancel
+  Cancel an appointment
+- PUT /appointments/<appointment_id>/complete
+  Mark appointment as completed (doctor only)
+- GET /appointments/available_slots
+  Query available time slots for a doctor on a specific date
+  Query parameters:
+  - `doctor_id`
+  - `date` (YYYY-MM-DD)
+
+**2. Availabilities**
+
+- GET /availabilities
+  Get all availability entries
+- GET /availabilities/<availability_id>
+  Get a specific availability
+- POST /availabilities
+  Create a new availability
+
+```json
+{
+  "doctor_id": "string",
+  "day_of_week": "string",
+  "start_time": "HH:MM:SS",
+  "end_time": "HH:MM:SS"
+}
+```
+
+- PUT /availabilities/<availability_id>
+  Update an availability
+- DELETE /availabilities/<availability_id>
+  Delete an availability
+
+**3. Doctors**
+
+- GET /doctors
+  Get all doctors
+- GET /doctors/<doctor_id>
+  Get a specific doctor
+- POST /doctors
+  Create a new doctor
+
+```json
+{
+  "first_name": "string",
+  "last_name": "string",
+  "email": "string",
+  "specialization": "string"
+}
+```
+
+- PUT /doctors/<doctor_id>
+  Update a doctor
+- DELETE /doctors/<doctor_id>
+  Delete a doctor
+
+4. Patients
+
+- GET /patients
+  Get all patients
+- GET /patients/<patient_id>
+  Get a specific patient
+- POST /patients
+  Create a new patient
+
+```json
+{
+  "first_name": "string",
+  "last_name": "string",
+  "email": "string"
+}
+```
+
+- PUT /patients/<patient_id>
+  Update a patient
+- DELETE /patients/<patient_id>
+  Delete a patient
+
+**5. Exceptions**
+
+- GET /exceptions
+  Get all exception dates
+- GET /exceptions/<exception_id>
+  Get a specific exception
+- POST /exceptions
+  Create a new exception
+
+```json
+{
+  "doctor_id": "string",
+  "date": "YYYY-MM-DD",
+  "is_available": true/false
+}
+```
+
+- PUT /exceptions/<exception_id>
+  Update an exception
+- DELETE /exceptions/<exception_id>
+  Delete an exception
+
+**6. Medical Records**
+
+- GET /medical-records
+  Get all medical records
+- GET /medical-records/<record_id>
+  Get a specific medical record
+- POST /medical-records
+  Create a new medical record
+
+```json
+{
+  "patient_id": "string",
+  "appointment_id": "string",
+  "record_data": "string"
+}
+```
+
+- PUT /medical-records/<record_id>
+  Update a medical record
+- DELETE /medical-records/<record_id>
+  Delete a medical record
+
+#### 📎 Sample Request
+
+Create Appointment
+
+```bash
+curl -X POST http://localhost:5000/api/v1/appointments \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your_jwt_token>" \
+  -d '{
+      "doctor_id": "0dd0a483-81f4-4d2c-abf3-dce880d54cad",
+      "patient_id": "ee536037-78b5-4678-a19a-b0b0e14b0d69",
+      "scheduled_time": "2025-08-20T14:30:00",
+      "status": "scheduled",
+      "duration": 30
+  }'
+```
+
+#### ✅ Success Response Example
+
+```json
+{
+  "id": "be1e7bc5-5fb5-4678-8f1d-28aaaba65c6d",
+  "doctor_id": "0dd0a483-81f4-4d2c-abf3-dce880d54cad",
+  "patient_id": "ee536037-78b5-4678-a19a-b0b0e14b0d69",
+  "scheduled_time": "2025-08-20T14:30:00",
+  "status": "scheduled",
+  "duration": 30
+}
+```
+
+#### ❌ Error Response Example
+
+```json
+{
+  "error": "Time slot already booked"
+}
+```
 
 # 🛠️ Setup & Usage
 
