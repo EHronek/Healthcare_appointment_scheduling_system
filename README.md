@@ -164,6 +164,19 @@ All endpoints are prefixed with:
 http://localhost:5000/api/v1
 ```
 
+### 📚 Endpoints Overview
+-----------------------------------------------------------------------------------
+|   **RESOURCE**    |  **METHODS**             |      **DESCRIPTION**             |
+|----------------------------------------------------------------------------------
+| /appointments     |   GET, POST, PUT, DELETE | Manage appointments               |
+| /availabilities   |  GET, POST, PUT, DELETE  |  Manage doctor availability times |
+| /doctors          |  GET, POST, PUT, DELETE  |  Manage doctor profiles     |
+| /patients         |  GET, POST, PUT, DELETE  |  Manage patient profiles     |
+| /exceptions       |  GET, POST, PUT, DELETE  |  Manage special date exceptions |
+| /medical-records  |  GET, POST, PUT, DELETE  |  Manage patient medical records |
+| /users            |  GET, POST, PUT, DELETE  | Manage user accounts   |
+--------------------------------------------------------------------------------------
+
 # 🛠️ Setup & Usage
 
 **✅ Environment Variables Required:**
