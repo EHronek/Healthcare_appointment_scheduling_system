@@ -167,7 +167,7 @@ http://localhost:5000/api/v1
 ### 📚 Endpoints Overview
 
 | **RESOURCE** | **METHODS** | **DESCRIPTION** |
-|-----------------------------------------------------------------------------------
+|---------------------------------------------
 | /appointments | GET, POST, PUT, DELETE | Manage appointments |
 | /availabilities | GET, POST, PUT, DELETE | Manage doctor availability times |
 | /doctors | GET, POST, PUT, DELETE | Manage doctor profiles |
