@@ -375,3 +375,104 @@ $ export JWT_SECRET_KEY="jwt_Secret_key"
 $ export CLIENT_ID="google_api_client_id"
 $ export CLIENT_SECRET="google_api_client_secret"
 ```
+
+## ✅ Prerequisites
+
+Make sure you're using a system with:
+
+- A modern version of Linux, macOS, or Windows 10/11 (Pro or WSL2)
+- Internet access
+- Basic terminal skills
+
+## Step 1: Install Docker & Docker Compose
+
+**📦 For Linux (Ubuntu/Debian-based)**
+
+```bash
+# Remove old versions (optional)
+sudo apt remove docker docker-engine docker.io containerd runc
+
+# Update packages
+sudo apt update
+
+# Install Docker using the convenience script
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Add your user to the docker group (optional, avoids sudo)
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+**✅ Verify Docker is working:**
+
+```bash
+docker version
+```
+
+**🧩 Docker Compose (plugin)**
+If you installed Docker via the script above, you already have docker compose as a plugin. Test it with:
+
+```bash
+docker compose version
+```
+
+No need to install docker-compose separately — docker compose (with a space) is now the standard.
+
+## Step 2: Clone the Repository
+
+```bash
+git clone https://github.com/EHronek/Health_appointment_scheduling_system.git
+cd Health_appointment_scheduling_system
+```
+
+## Step 3: Configure Environment Variables
+
+Create a .env file in the project root:
+
+```bash
+cp .env.example .env
+```
+
+Then open .env and configure values like:
+
+```env
+# Database
+HMS_MYSQL_USER=root
+HMS_MYSQL_PWD=password
+HMS_MYSQL_HOST=db
+HMS_MYSQL_DB=hospital_db
+HMS_TYPE_STORAGE=db
+HMS_ROOT_PWD=Root_password
+
+# GOOGLE OAUTH 2.0 API CREDENTIALS
+CLIENT_ID="google_client_id"
+CLIENT_SECRET="you_google_client_secret"
+
+# Flask
+SECRET_KEY="Flask_app_secret_key"
+JWT_SECRET_KEY="Jwt_secret_key"
+
+# Debug
+FLASK_DEBUG=0
+```
+
+## Step 4: Build & Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+- Flask API will be available at: `http://localhost:5000`
+- MySQL database will be running in a container named `db`
+
+**To stop containers:**
+
+```bash
+docker compose down
+```
+
+## Troubleshooting
+
+- Port already in use? Edit docker-compose.yml and change 5000:5000 to another port.
+- MySQL connection errors? Ensure .env has correct credentials and that the db service is healthy.
