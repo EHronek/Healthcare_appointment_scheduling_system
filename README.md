@@ -153,6 +153,8 @@ The API uses JWT Bearer tokens for authentication. Include the token in the requ
 Authorization: Bearer <your_jwt_token>
 ```
 
+OAuth 2.0 is used for patient registration via Google login at `/login`.
+
 # 🛠️ Setup & Usage
 
 **✅ Environment Variables Required:**
