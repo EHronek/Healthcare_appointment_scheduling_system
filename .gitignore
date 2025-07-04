@@ -42,3 +42,6 @@ htmlcov/
 uploads/
 media/
 .venv/
+
+
+flask_session/

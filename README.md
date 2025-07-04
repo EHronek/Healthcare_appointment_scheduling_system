@@ -153,7 +153,16 @@ The API uses JWT Bearer tokens for authentication. Include the token in the requ
 Authorization: Bearer <your_jwt_token>
 ```
 
-OAuth 2.0 is used for patient registration via Google login at `/login`.
+OAuth 2.0 is used for patient registration via Google login at `localhost:5000/login`.
+System Admins and Doctors login to the system is via the api endpoint `localhost:5000/login-user`
+
+### 🌐 Base URL
+
+All endpoints are prefixed with:
+
+```
+http://localhost:5000/api/v1
+```
 
 # 🛠️ Setup & Usage
 
