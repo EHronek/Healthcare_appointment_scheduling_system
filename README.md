@@ -149,7 +149,7 @@ This system provides a RESTful API for managing healthcare appointments, doctors
 
 The API uses JWT Bearer tokens for authentication. Include the token in the request header:
 
-```json
+```http
 Authorization: Bearer <your_jwt_token>
 ```
 
