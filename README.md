@@ -34,7 +34,60 @@ Frontend: (Optional) React or basic HTML/CSS/JS
 
 ## 🧠 Project Architecture
 
-healthcare-scheduler/ ├── api/ │ └── v1/ │ ├── routes/ │ └── app.py ├── auth/ │ ├── oauth.py │ └── jwt_handler.py ├── config/ │ └── env.py ├── console.py ├── models/ │ ├── base_model.py │ ├── doctor.py │ ├── patient_record.py │ ├── appointments.py │ ├── availability.py │ ├── exception.py │ ├── medical_record.py │ └── engine/ │ ├── db_storage.py │ └── file_storage.py ├── requirements.txt └── README.md
+```
+.
+├── api/
+│   ├── __init__.py
+│   ├── v1/
+│   │   ├── app.py
+│   │   ├── helper_functions.py
+│   │   ├── __init__.py
+│   │   ├── static/
+│   │   │   └── swagger.json
+│   │   ├── views/
+│   │   │   ├── appointments.py
+│   │   │   ├── availabilities.py
+│   │   │   ├── doctors.py
+│   │   │   ├── exceptions.py
+│   │   │   ├── index.py
+│   │   │   ├── medical_records.py
+│   │   │   ├── patients.py
+│   │   │   ├── users.py
+│   │   │   └── __init__.py
+│   │   └── auth/
+│   │       ├── auth.py
+│   │       └── __init__.py
+│   └── __pycache__/
+├── console.py
+├── Dockerfile
+├── docker-compose.yml
+├── entrypoint.sh
+├── flask_session/
+├── file.json
+├── models/
+│   ├── appointment.py
+│   ├── availability.py
+│   ├── base_model.py
+│   ├── doctor.py
+│   ├── exception.py
+│   ├── medical_record.py
+│   ├── patient.py
+│   ├── user.py
+│   ├── __init__.py
+│   └── engine/
+│       ├── db_storage.py
+│       ├── file_storage.py
+│       └── __init__.py
+├── README.md
+├── requirements.txt
+├── setup_mysql_dev.sql
+├── test_available.py
+├── tests/
+│   ├── test_available.py
+│   └── test_validate_appointment.py
+├── wait-for-it.sh
+└── web_dynamic/
+```
 
 ---
 
