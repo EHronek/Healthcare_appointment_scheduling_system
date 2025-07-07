@@ -1,0 +1,47 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+hmsvenv/
+
+# Ignore environment files
+.env
+*.env
+
+# Ignore Flask session data
+flask_session/
+
+# Ignore IDE/editor configs
+.vscode/
+.idea/
+*.swp
+
+# Ignore logs
+*.log
+
+# Ignore SQLite database (if using for testing/dev)
+*.sqlite3
+*.db
+
+# Ignore compiled files and cache
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Ignore coverage and test outputs
+htmlcov/
+.coverage
+.cache/
+.pytest_cache/
+
+# Ignore uploads (if you store temporary user uploads locally)
+uploads/
+media/
+.venv/
+
+
+flask_session/
