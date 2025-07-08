@@ -1160,7 +1160,13 @@ const ExceptionsTab = ({ exceptions, doctorId, setExceptions }) => {
 };
 
 // Component for Medical Records Tab
-const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
+const MedicalRecordsTab = ({ 
+  records, 
+  currentDoctorId, 
+  onRefresh,
+  patients = [],
+  appointments = []
+}) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [doctorRecords, setDoctorRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1177,6 +1183,28 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
     prescriptions: ''
   });
 
+  // Prepare dropdown options
+  const patientOptions = patients.map(patient => ({
+    value: patient.id,
+    label: `${patient.first_name} ${patient.last_name} (${patient.insurance_provider || 'No insurance'})`
+  }));
+
+  const appointmentOptions = appointments
+    .filter(appt => 
+      appt.doctor_id === currentDoctorId && 
+      appt.status === 'completed' &&
+      !records.some(record => record.appointment_id === appt.id)
+    )
+    .map(appt => {
+      const patient = patients.find(p => p.id === appt.patient_id);
+      const patientName = patient ? `${patient.first_name} ${patient.last_name}` : 'Unknown Patient';
+      return {
+        value: appt.id,
+        label: `${new Date(appt.scheduled_time).toLocaleString()} - ${patientName} (${appt.duration} mins)`,
+        patient_id: appt.patient_id
+      };
+    });
+
   useEffect(() => {
     if (!records || !currentDoctorId) {
       setDoctorRecords([]);
@@ -1188,23 +1216,28 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
       record.doctor_id === currentDoctorId
     );
 
-    const enhancedRecords = filteredRecords.map(record => ({
-      ...record,
-      patient_name: record.patient_name || `${record.patient?.first_name} ${record.patient?.last_name}`,
-      appointment_date: record.appointment_date || record.appointment?.scheduled_time,
-      notes_preview: record.notes_preview || (record.notes ? `${record.notes.substring(0, 100)}...` : 'No notes')
-    }));
+    const enhancedRecords = filteredRecords.map(record => {
+      const relatedAppointment = appointments.find(a => a.id === record.appointment_id);
+      const patient = patients.find(p => p.id === record.patient_id);
+      
+      return {
+        ...record,
+        patient_name: patient ? `${patient.first_name} ${patient.last_name}` : 'Unknown Patient',
+        appointment_date: relatedAppointment ? relatedAppointment.scheduled_time : record.created_at,
+        notes_preview: record.notes ? `${record.notes.substring(0, 100)}...` : 'No notes'
+      };
+    });
 
     setDoctorRecords(enhancedRecords);
     setIsLoading(false);
-  }, [records, currentDoctorId]);
+  }, [records, currentDoctorId, appointments, patients]);
 
   const handleEditClick = (record) => {
     setSelectedRecord(record);
     setIsEditing(true);
     setEditFormData({
       notes: record.notes,
-      prescriptions: record.prescriptions
+      prescriptions: record.prescriptions || ''
     });
   };
 
@@ -1230,18 +1263,19 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
       if (response.ok) {
         alert('Record updated successfully');
         setIsEditing(false);
-        onRefresh(); // Refresh the records list
+        onRefresh();
       } else {
-        throw new Error('Failed to update record');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update record');
       }
     } catch (error) {
       console.error('Error updating record:', error);
-      alert('Error updating record');
+      alert(error.message || 'Error updating record');
     }
   };
 
   const handleDeleteRecord = async (recordId) => {
-    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    if (!window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
 
     try {
       const response = await fetch(`/api/medical-records/${recordId}`, {
@@ -1253,7 +1287,7 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
 
       if (response.ok) {
         alert('Record deleted successfully');
-        onRefresh(); // Refresh the records list
+        onRefresh();
       } else {
         throw new Error('Failed to delete record');
       }
@@ -1265,13 +1299,30 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
 
   const handleCreateFormChange = (e) => {
     const { name, value } = e.target;
-    setNewRecordData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // If selecting an appointment, automatically set the patient_id
+    if (name === 'appointment_id') {
+      const selectedAppointment = appointmentOptions.find(opt => opt.value === value);
+      setNewRecordData(prev => ({
+        ...prev,
+        [name]: value,
+        patient_id: selectedAppointment ? selectedAppointment.patient_id : ''
+      }));
+    } else {
+      setNewRecordData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleCreateRecord = async () => {
+    // Validate required fields
+    if (!newRecordData.appointment_id || !newRecordData.patient_id || !newRecordData.notes) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     try {
       const response = await fetch('/api/medical-records', {
         method: 'POST',
@@ -1286,7 +1337,7 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
       });
 
       if (response.ok) {
-        alert('Record created successfully');
+        alert('Medical record created successfully');
         setShowCreateForm(false);
         setNewRecordData({
           appointment_id: '',
@@ -1294,13 +1345,14 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
           notes: '',
           prescriptions: ''
         });
-        onRefresh(); // Refresh the records list
+        onRefresh();
       } else {
-        throw new Error('Failed to create record');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create record');
       }
     } catch (error) {
       console.error('Error creating record:', error);
-      alert('Error creating record');
+      alert(error.message || 'Error creating record');
     }
   };
 
@@ -1337,6 +1389,8 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
             borderRadius: '4px',
             cursor: 'pointer'
           }}
+          disabled={appointmentOptions.length === 0}
+          title={appointmentOptions.length === 0 ? "No completed appointments available" : ""}
         >
           Create New Record
         </button>
@@ -1350,41 +1404,62 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
           marginBottom: '1.5rem'
         }}>
           <h3>Create New Medical Record</h3>
+          
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Appointment ID:
-              <input
-                type="text"
+              Related Appointment: *
+              <select
                 name="appointment_id"
                 value={newRecordData.appointment_id}
                 onChange={handleCreateFormChange}
                 style={{ width: '100%', padding: '0.5rem' }}
-              />
+                required
+              >
+                <option value="">Select a completed appointment</option>
+                {appointmentOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
+
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Patient ID:
-              <input
-                type="text"
+              Patient: *
+              <select
                 name="patient_id"
                 value={newRecordData.patient_id}
                 onChange={handleCreateFormChange}
                 style={{ width: '100%', padding: '0.5rem' }}
-              />
+                required
+                disabled={!newRecordData.appointment_id}
+              >
+                <option value="">{newRecordData.appointment_id ? "Patient will be auto-selected" : "Select an appointment first"}</option>
+                {newRecordData.patient_id && (
+                  <option value={newRecordData.patient_id}>
+                    {patientOptions.find(p => p.value === newRecordData.patient_id)?.label || 'Selected patient'}
+                  </option>
+                )}
+              </select>
             </label>
           </div>
+
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Notes:
+              Notes: *
               <textarea
                 name="notes"
                 value={newRecordData.notes}
                 onChange={handleCreateFormChange}
                 style={{ width: '100%', padding: '0.5rem', minHeight: '100px' }}
+                required
+                placeholder="Enter clinical notes, observations, and treatment details"
               />
             </label>
           </div>
+
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>
               Prescriptions:
@@ -1393,9 +1468,11 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
                 value={newRecordData.prescriptions}
                 onChange={handleCreateFormChange}
                 style={{ width: '100%', padding: '0.5rem', minHeight: '100px' }}
+                placeholder="Enter prescribed medications and dosage instructions"
               />
             </label>
           </div>
+
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               onClick={handleCreateRecord}
@@ -1408,10 +1485,18 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
                 cursor: 'pointer'
               }}
             >
-              Save
+              Save Record
             </button>
             <button
-              onClick={() => setShowCreateForm(false)}
+              onClick={() => {
+                setShowCreateForm(false);
+                setNewRecordData({
+                  appointment_id: '',
+                  patient_id: '',
+                  notes: '',
+                  prescriptions: ''
+                });
+              }}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#6c757d',
@@ -1424,10 +1509,14 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
               Cancel
             </button>
           </div>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#6c757d' }}>
+            * Required fields
+          </p>
         </div>
       )}
 
-      {selectedRecord && !isEditing ? (
+      {/* View/Edit Record Section */}
+      {selectedRecord && !isEditing && (
         <div>
           <div style={{
             display: 'flex',
@@ -1516,7 +1605,10 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
             </div>
           </div>
         </div>
-      ) : selectedRecord && isEditing ? (
+      )}
+
+      {/* Edit Record Section */}
+      {selectedRecord && isEditing && (
         <div>
           <div style={{
             display: 'flex',
@@ -1553,7 +1645,7 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-                <strong>Notes:</strong>
+                <strong>Notes: *</strong>
                 <textarea
                   name="notes"
                   value={editFormData.notes}
@@ -1566,6 +1658,7 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
                     marginTop: '0.5rem',
                     border: '1px solid #ced4da'
                   }}
+                  required
                 />
               </label>
             </div>
@@ -1602,7 +1695,10 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
             </button>
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* Records List Section */}
+      {!selectedRecord && (
         <div>
           {doctorRecords.length > 0 ? (
             <div style={{
@@ -1627,7 +1723,7 @@ const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
                         {new Date(record.appointment_date).toLocaleString()}
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        {record.notes_preview || 'No notes'}
+                        {record.notes_preview}
                       </td>
                       <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
                         <button
