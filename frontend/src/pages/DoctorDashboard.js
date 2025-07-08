@@ -256,6 +256,40 @@ const DoctorDashboard = () => {
   );
 };
 
+const getPatientData = async (patientId, accessToken) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/v1/patients/${patientId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}` // Send JWT token
+      },
+      credentials: 'include' // if using cookies for auth
+    });
+
+    if (!response.ok) {
+      // Try parsing error message from Flask backend
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (jsonError) {
+        errorData = {};
+      }
+
+      const errorMessage = errorData.error || 'Failed to fetch patient data';
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json(); // This is the patient object
+    console.log('Patient Data:', data);
+    return data;
+
+  } catch (error) {
+    console.error("Error fetching patient:", error.message);
+    alert(error.message); // Show user-friendly error
+  }
+};
+
 // Component for Profile Tab
 const ProfileTab = ({ doctorData, setDoctorData }) => {
   const [editMode, setEditMode] = useState(false);
@@ -436,7 +470,6 @@ const AppointmentsTab = ({ appointments = [], doctorId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  
   const filteredAppointments = safeAppointments.filter(appointment => {
     const matchesStatus = filter === 'all' || appointment.status === filter;
     const matchesDate = !dateFilter || 
@@ -445,23 +478,32 @@ const AppointmentsTab = ({ appointments = [], doctorId }) => {
   });
 
   const stats = {
-    total: appointments.length,
-    completed: appointments.filter(a => a.status === 'completed').length,
-    cancelled: appointments.filter(a => a.status === 'cancelled').length,
-    upcoming: appointments.filter(a => a.status === 'scheduled').length
+    total: safeAppointments.length,
+    completed: safeAppointments.filter(a => a.status === 'completed').length,
+    cancelled: safeAppointments.filter(a => a.status === 'cancelled').length,
+    upcoming: safeAppointments.filter(a => a.status === 'scheduled').length
   };
 
   const handleCompleteAppointment = async (appointmentId) => {
+    setLoading(true);
+    setError(null);
+
     try {
       const response = await fetch(`http://localhost:5000/api/v1/appointments/${appointmentId}/complete`, {
         credentials: "include",
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
         }
       });
       
-      if (!response.ok) throw new Error('Failed to complete appointment');
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Ensure we always have a string message to display
+        const errorMessage = errorData.error || 'Failed to complete appointment';
+        throw new Error(errorMessage);
+      }
       
       // Refresh appointments after completion
       const updatedResponse = await fetch(`http://localhost:5000/api/v1/doctors/${doctorId}/appointments`, {
@@ -469,11 +511,19 @@ const AppointmentsTab = ({ appointments = [], doctorId }) => {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
       });
+
+      if (!updatedResponse.ok) {
+        const errorData = await updatedResponse.json();
+        const errorMessage = errorData.error?.message || errorData.message || 'Failed to fetch updated appointments';
+        throw new Error(errorMessage);
+      }
+      
       const updatedAppointments = await updatedResponse.json();
       return updatedAppointments;
     } catch (err) {
       console.error('Error completing appointment:', err);
-      setError(err.message);
+      // Ensure we're always setting a string error message
+      setError(err.message || 'An unknown error occurred');
       return null;
     } finally {
       setLoading(false);
@@ -481,10 +531,22 @@ const AppointmentsTab = ({ appointments = [], doctorId }) => {
   };
 
   if (loading) return <div>Loading appointments...</div>;
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
 
   return (
     <div>
+      {/* Error display - now safely handles string messages only */}
+      {error && (
+        <div style={{ 
+          color: 'red', 
+          backgroundColor: '#ffeeee',
+          padding: '1rem',
+          borderRadius: '4px',
+          marginBottom: '1rem'
+        }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
+
       <h2 style={{ marginBottom: '1.5rem' }}>My Appointments</h2>
       
       <div style={{
@@ -596,7 +658,7 @@ const AppointmentsTab = ({ appointments = [], doctorId }) => {
             {filteredAppointments.length > 0 ? (
               filteredAppointments.map(appointment => (
                 <tr key={appointment.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                  <td style={{ padding: '1rem' }}>{appointment.patient_name}</td>
+                  <td style={{ padding: '1rem' }}>{appointment.patient_id}</td>
                   <td style={{ padding: '1rem' }}>
                     {new Date(appointment.scheduled_time).toLocaleString()}
                   </td>
@@ -617,9 +679,11 @@ const AppointmentsTab = ({ appointments = [], doctorId }) => {
                     {appointment.status === 'scheduled' && (
                       <button
                         onClick={async () => {
+                          console.log(appointment.id)
                           const updatedAppointments = await handleCompleteAppointment(appointment.id);
                           if (updatedAppointments) {
                             // Update state with new appointments
+                            window.location.reload();
                           }
                         }}
                         style={{
