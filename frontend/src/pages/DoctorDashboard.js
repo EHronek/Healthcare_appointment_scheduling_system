@@ -1160,24 +1160,258 @@ const ExceptionsTab = ({ exceptions, doctorId, setExceptions }) => {
 };
 
 // Component for Medical Records Tab
-const MedicalRecordsTab = ({ records, doctorId }) => {
+const MedicalRecordsTab = ({ records, currentDoctorId, onRefresh }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [doctorRecords, setDoctorRecords] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    notes: '',
+    prescriptions: ''
+  });
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newRecordData, setNewRecordData] = useState({
+    appointment_id: '',
+    patient_id: '',
+    notes: '',
+    prescriptions: ''
+  });
+
+  useEffect(() => {
+    if (!records || !currentDoctorId) {
+      setDoctorRecords([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const filteredRecords = records.filter(record => 
+      record.doctor_id === currentDoctorId
+    );
+
+    const enhancedRecords = filteredRecords.map(record => ({
+      ...record,
+      patient_name: record.patient_name || `${record.patient?.first_name} ${record.patient?.last_name}`,
+      appointment_date: record.appointment_date || record.appointment?.scheduled_time,
+      notes_preview: record.notes_preview || (record.notes ? `${record.notes.substring(0, 100)}...` : 'No notes')
+    }));
+
+    setDoctorRecords(enhancedRecords);
+    setIsLoading(false);
+  }, [records, currentDoctorId]);
+
+  const handleEditClick = (record) => {
+    setSelectedRecord(record);
+    setIsEditing(true);
+    setEditFormData({
+      notes: record.notes,
+      prescriptions: record.prescriptions
+    });
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleUpdateRecord = async () => {
+    try {
+      const response = await fetch(`/api/medical-records/${selectedRecord.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      if (response.ok) {
+        alert('Record updated successfully');
+        setIsEditing(false);
+        onRefresh(); // Refresh the records list
+      } else {
+        throw new Error('Failed to update record');
+      }
+    } catch (error) {
+      console.error('Error updating record:', error);
+      alert('Error updating record');
+    }
+  };
+
+  const handleDeleteRecord = async (recordId) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+
+    try {
+      const response = await fetch(`/api/medical-records/${recordId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        alert('Record deleted successfully');
+        onRefresh(); // Refresh the records list
+      } else {
+        throw new Error('Failed to delete record');
+      }
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      alert('Error deleting record');
+    }
+  };
+
+  const handleCreateFormChange = (e) => {
+    const { name, value } = e.target;
+    setNewRecordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCreateRecord = async () => {
+    try {
+      const response = await fetch('/api/medical-records', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          ...newRecordData,
+          doctor_id: currentDoctorId
+        })
+      });
+
+      if (response.ok) {
+        alert('Record created successfully');
+        setShowCreateForm(false);
+        setNewRecordData({
+          appointment_id: '',
+          patient_id: '',
+          notes: '',
+          prescriptions: ''
+        });
+        onRefresh(); // Refresh the records list
+      } else {
+        throw new Error('Failed to create record');
+      }
+    } catch (error) {
+      console.error('Error creating record:', error);
+      alert('Error creating record');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div style={{
+        backgroundColor: '#f8f9fa',
+        padding: '2rem',
+        borderRadius: '8px',
+        textAlign: 'center',
+        color: '#6c757d'
+      }}>
+        Loading medical records...
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h2 style={{ marginBottom: '1.5rem' }}>Medical Records</h2>
-      
-      {selectedRecord ? (
-        <div>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.5rem'
-          }}>
-            <h3>Record Details</h3>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1.5rem'
+      }}>
+        <h2>Medical Records</h2>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Create New Record
+        </button>
+      </div>
+
+      {showCreateForm && (
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '1.5rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem'
+        }}>
+          <h3>Create New Medical Record</h3>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Appointment ID:
+              <input
+                type="text"
+                name="appointment_id"
+                value={newRecordData.appointment_id}
+                onChange={handleCreateFormChange}
+                style={{ width: '100%', padding: '0.5rem' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Patient ID:
+              <input
+                type="text"
+                name="patient_id"
+                value={newRecordData.patient_id}
+                onChange={handleCreateFormChange}
+                style={{ width: '100%', padding: '0.5rem' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Notes:
+              <textarea
+                name="notes"
+                value={newRecordData.notes}
+                onChange={handleCreateFormChange}
+                style={{ width: '100%', padding: '0.5rem', minHeight: '100px' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Prescriptions:
+              <textarea
+                name="prescriptions"
+                value={newRecordData.prescriptions}
+                onChange={handleCreateFormChange}
+                style={{ width: '100%', padding: '0.5rem', minHeight: '100px' }}
+              />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
             <button
-              onClick={() => setSelectedRecord(null)}
+              onClick={handleCreateRecord}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setShowCreateForm(false)}
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: '#6c757d',
@@ -1187,8 +1421,62 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
                 cursor: 'pointer'
               }}
             >
-              Back to List
+              Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {selectedRecord && !isEditing ? (
+        <div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem'
+          }}>
+            <h3>Record Details</h3>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => handleEditClick(selectedRecord)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#17a2b8',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDeleteRecord(selectedRecord.id)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedRecord(null)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Back to List
+              </button>
+            </div>
           </div>
           
           <div style={{
@@ -1228,9 +1516,95 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
             </div>
           </div>
         </div>
+      ) : selectedRecord && isEditing ? (
+        <div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem'
+          }}>
+            <h3>Edit Record</h3>
+            <button
+              onClick={() => setIsEditing(false)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+          
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            padding: '1.5rem',
+            borderRadius: '8px'
+          }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Patient:</strong> {selectedRecord.patient_name}
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Appointment Date:</strong> {new Date(selectedRecord.appointment_date).toLocaleString()}
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                <strong>Notes:</strong>
+                <textarea
+                  name="notes"
+                  value={editFormData.notes}
+                  onChange={handleEditFormChange}
+                  style={{
+                    width: '100%',
+                    minHeight: '150px',
+                    padding: '1rem',
+                    borderRadius: '4px',
+                    marginTop: '0.5rem',
+                    border: '1px solid #ced4da'
+                  }}
+                />
+              </label>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                <strong>Prescriptions:</strong>
+                <textarea
+                  name="prescriptions"
+                  value={editFormData.prescriptions}
+                  onChange={handleEditFormChange}
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '1rem',
+                    borderRadius: '4px',
+                    marginTop: '0.5rem',
+                    border: '1px solid #ced4da'
+                  }}
+                />
+              </label>
+            </div>
+            <button
+              onClick={handleUpdateRecord}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
       ) : (
         <div>
-          {records.length > 0 ? (
+          {doctorRecords.length > 0 ? (
             <div style={{
               backgroundColor: 'white',
               borderRadius: '8px',
@@ -1246,7 +1620,7 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map(record => (
+                  {doctorRecords.map(record => (
                     <tr key={record.id} style={{ borderBottom: '1px solid #dee2e6' }}>
                       <td style={{ padding: '1rem' }}>{record.patient_name}</td>
                       <td style={{ padding: '1rem' }}>
@@ -1255,7 +1629,7 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
                       <td style={{ padding: '1rem' }}>
                         {record.notes_preview || 'No notes'}
                       </td>
-                      <td style={{ padding: '1rem' }}>
+                      <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
                         <button
                           onClick={() => setSelectedRecord(record)}
                           style={{
@@ -1267,7 +1641,33 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
                             cursor: 'pointer'
                           }}
                         >
-                          View Details
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleEditClick(record)}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            backgroundColor: '#ffc107',
+                            color: 'black',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRecord(record.id)}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -1283,7 +1683,10 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
               textAlign: 'center',
               color: '#6c757d'
             }}>
-              No medical records found. Records will appear here after you complete appointments.
+              {currentDoctorId ? 
+                "No medical records found for your patients. Records will appear here after you complete appointments." : 
+                "Please sign in as a doctor to view medical records."
+              }
             </div>
           )}
         </div>
@@ -1291,5 +1694,6 @@ const MedicalRecordsTab = ({ records, doctorId }) => {
     </div>
   );
 };
+
 
 export default DoctorDashboard;
