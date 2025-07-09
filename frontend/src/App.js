@@ -8,6 +8,7 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import BookAppointment from './pages/BookAppointment';
 import ProtectedRoute from './components/ProtectedRoute';
+import OAuthCallback from './pages/OAuthCallback';
 
 function App() {
   return (
@@ -15,6 +16,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/patient-login" element={<PatientLogin />} />
+
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
 
         {/* Protected Routes */}
         <Route

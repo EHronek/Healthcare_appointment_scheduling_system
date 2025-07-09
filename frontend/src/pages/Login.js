@@ -1,13 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [form, setForm] = useState({
     email: '',
     password: '',
   });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  // Check for OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const error = urlParams.get('error');
+
+    if (error) {
+      setError(error);
+      return;
+    }
+
+    if (accessToken && refreshToken) {
+      handleOAuthSuccess(accessToken, refreshToken);
+    }
+  }, []);
+
+  const handleOAuthSuccess = async (accessToken, refreshToken) => {
+    try {
+      localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('refresh_token', refreshToken);
+
+      // Fetch user info using the access token
+      const userResponse = await fetch('http://localhost:5000/api/user', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user info');
+      }
+
+      const userData = await userResponse.json();
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Redirect based on role
+      redirectUser(userData.role);
+    } catch (err) {
+      console.error('OAuth processing error:', err);
+      setError('Failed to complete OAuth login');
+    }
+  };
+
+  const redirectUser = (role) => {
+    switch (role) {
+      case 'doctor':
+        navigate('/doctor');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+      case 'patient':
+        navigate('/patient');
+        break;
+      default:
+        navigate('/');
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -34,20 +95,11 @@ function Login() {
         throw new Error(data.msg || 'Login failed');
       }
 
-      // Store tokens and user data
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Redirect based on user role
-      if (data.user.role === 'doctor') {
-        window.location.href = '/doctor';
-      } else if (data.user.role === 'admin') {
-        window.location.href = '/admin';
-      } else {
-        window.location.href = '/'; // Default redirect
-      }
-
+      redirectUser(data.user.role);
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message);
@@ -68,7 +120,7 @@ function Login() {
       boxShadow: '0 0 10px rgba(0,0,0,0.1)',
       borderRadius: '8px'
     }}>
-      <h2 style={{ textAlign: 'center' }}>Doctor / Admin Login</h2>
+      <h2 style={{ textAlign: 'center' }}>Login</h2>
       
       {error && (
         <div style={{ 
