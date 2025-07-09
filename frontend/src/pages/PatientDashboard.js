@@ -13,7 +13,7 @@ function PatientDashboard() {
       try {
         const stored = localStorage.getItem('patient');
         if (!stored) {
-          window.location.href = '/patient-login';
+          window.location.href = '/login'; // ✅ updated from /patient-login
           return;
         }
 
