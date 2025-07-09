@@ -2,14 +2,15 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, User, Calendar, MessageSquare, Home } from 'lucide-react';
 
-const PatientNavbar = ({ role }) => {
+const PatientNavbar = () => {
   const navigate = useNavigate();
-  const patient = JSON.parse(localStorage.getItem('patient'));
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const handleLogout = () => {
-    localStorage.removeItem('patient');
-    localStorage.removeItem('token');
-    navigate('/patient-login');
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    navigate('/login');
   };
 
   return (
@@ -56,7 +57,7 @@ const PatientNavbar = ({ role }) => {
           <div className="flex items-center">
             <div className="hidden md:flex items-center mr-4">
               <span className="text-gray-700">
-                {patient?.first_name} {patient?.last_name}
+                {user?.name}
               </span>
             </div>
             <button
