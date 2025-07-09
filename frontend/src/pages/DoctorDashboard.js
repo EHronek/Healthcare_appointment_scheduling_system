@@ -1169,7 +1169,7 @@ const MedicalRecordsTab = ({
 }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [doctorRecords, setDoctorRecords] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({
     notes: '',
@@ -1182,6 +1182,7 @@ const MedicalRecordsTab = ({
     notes: '',
     prescriptions: ''
   });
+  const [error, setError] = useState(null);
 
   // Prepare dropdown options
   const patientOptions = patients.map(patient => ({
@@ -1206,30 +1207,38 @@ const MedicalRecordsTab = ({
     });
 
   useEffect(() => {
-    if (!records || !currentDoctorId) {
-      setDoctorRecords([]);
+    if (!currentDoctorId) {
+      setError("Doctor authentication required");
       setIsLoading(false);
       return;
     }
 
-    const filteredRecords = records.filter(record => 
-      record.doctor_id === currentDoctorId
-    );
+    setIsLoading(true);
+    try {
+      const filteredRecords = records.filter(record => 
+        record.doctor_id === currentDoctorId
+      );
 
-    const enhancedRecords = filteredRecords.map(record => {
-      const relatedAppointment = appointments.find(a => a.id === record.appointment_id);
-      const patient = patients.find(p => p.id === record.patient_id);
-      
-      return {
-        ...record,
-        patient_name: patient ? `${patient.first_name} ${patient.last_name}` : 'Unknown Patient',
-        appointment_date: relatedAppointment ? relatedAppointment.scheduled_time : record.created_at,
-        notes_preview: record.notes ? `${record.notes.substring(0, 100)}...` : 'No notes'
-      };
-    });
+      const enhancedRecords = filteredRecords.map(record => {
+        const relatedAppointment = appointments.find(a => a.id === record.appointment_id);
+        const patient = patients.find(p => p.id === record.patient_id);
+        
+        return {
+          ...record,
+          patient_name: patient ? `${patient.first_name} ${patient.last_name}` : 'Unknown Patient',
+          appointment_date: relatedAppointment ? relatedAppointment.scheduled_time : record.created_at,
+          notes_preview: record.notes ? `${record.notes.substring(0, 100)}...` : 'No notes'
+        };
+      });
 
-    setDoctorRecords(enhancedRecords);
-    setIsLoading(false);
+      setDoctorRecords(enhancedRecords);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load records");
+      console.error("Error loading records:", err);
+    } finally {
+      setIsLoading(false);
+    }
   }, [records, currentDoctorId, appointments, patients]);
 
   const handleEditClick = (record) => {
@@ -1251,7 +1260,7 @@ const MedicalRecordsTab = ({
 
   const handleUpdateRecord = async () => {
     try {
-      const response = await fetch(`/api/medical-records/${selectedRecord.id}`, {
+      const response = await fetch(`http://localhost:3000/api/v1/medical-records/${selectedRecord.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1260,14 +1269,14 @@ const MedicalRecordsTab = ({
         body: JSON.stringify(editFormData)
       });
 
-      if (response.ok) {
-        alert('Record updated successfully');
-        setIsEditing(false);
-        onRefresh();
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update record');
       }
+
+      alert('Record updated successfully');
+      setIsEditing(false);
+      onRefresh();
     } catch (error) {
       console.error('Error updating record:', error);
       alert(error.message || 'Error updating record');
@@ -1278,19 +1287,19 @@ const MedicalRecordsTab = ({
     if (!window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
 
     try {
-      const response = await fetch(`/api/medical-records/${recordId}`, {
+      const response = await fetch(`http://localhost:3000/api/v1/medical-records/${recordId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (response.ok) {
-        alert('Record deleted successfully');
-        onRefresh();
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to delete record');
       }
+
+      alert('Record deleted successfully');
+      onRefresh();
     } catch (error) {
       console.error('Error deleting record:', error);
       alert('Error deleting record');
@@ -1300,7 +1309,6 @@ const MedicalRecordsTab = ({
   const handleCreateFormChange = (e) => {
     const { name, value } = e.target;
     
-    // If selecting an appointment, automatically set the patient_id
     if (name === 'appointment_id') {
       const selectedAppointment = appointmentOptions.find(opt => opt.value === value);
       setNewRecordData(prev => ({
@@ -1317,14 +1325,13 @@ const MedicalRecordsTab = ({
   };
 
   const handleCreateRecord = async () => {
-    // Validate required fields
-    if (!newRecordData.appointment_id || !newRecordData.patient_id || !newRecordData.notes) {
+    if (!newRecordData.appointment_id || !newRecordData.notes) {
       alert('Please fill in all required fields');
       return;
     }
 
     try {
-      const response = await fetch('/api/medical-records', {
+      const response = await fetch('http://localhost:3000/api/v1/medical-records', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1336,25 +1343,39 @@ const MedicalRecordsTab = ({
         })
       });
 
-      if (response.ok) {
-        alert('Medical record created successfully');
-        setShowCreateForm(false);
-        setNewRecordData({
-          appointment_id: '',
-          patient_id: '',
-          notes: '',
-          prescriptions: ''
-        });
-        onRefresh();
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create record');
       }
+
+      alert('Medical record created successfully');
+      setShowCreateForm(false);
+      setNewRecordData({
+        appointment_id: '',
+        patient_id: '',
+        notes: '',
+        prescriptions: ''
+      });
+      onRefresh();
     } catch (error) {
       console.error('Error creating record:', error);
       alert(error.message || 'Error creating record');
     }
   };
+
+  if (!currentDoctorId) {
+    return (
+      <div style={{
+        backgroundColor: '#f8f9fa',
+        padding: '2rem',
+        borderRadius: '8px',
+        textAlign: 'center',
+        color: '#dc3545'
+      }}>
+        Error: Doctor authentication required. Please sign in as a doctor.
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -1366,6 +1387,20 @@ const MedicalRecordsTab = ({
         color: '#6c757d'
       }}>
         Loading medical records...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        backgroundColor: '#f8f9fa',
+        padding: '2rem',
+        borderRadius: '8px',
+        textAlign: 'center',
+        color: '#dc3545'
+      }}>
+        Error: {error}
       </div>
     );
   }
@@ -1387,7 +1422,8 @@ const MedicalRecordsTab = ({
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            opacity: appointmentOptions.length === 0 ? 0.5 : 1
           }}
           disabled={appointmentOptions.length === 0}
           title={appointmentOptions.length === 0 ? "No completed appointments available" : ""}
@@ -1428,21 +1464,13 @@ const MedicalRecordsTab = ({
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>
               Patient: *
-              <select
-                name="patient_id"
-                value={newRecordData.patient_id}
-                onChange={handleCreateFormChange}
-                style={{ width: '100%', padding: '0.5rem' }}
-                required
-                disabled={!newRecordData.appointment_id}
-              >
-                <option value="">{newRecordData.appointment_id ? "Patient will be auto-selected" : "Select an appointment first"}</option>
-                {newRecordData.patient_id && (
-                  <option value={newRecordData.patient_id}>
-                    {patientOptions.find(p => p.value === newRecordData.patient_id)?.label || 'Selected patient'}
-                  </option>
-                )}
-              </select>
+              <input
+                type="text"
+                value={patientOptions.find(p => p.value === newRecordData.patient_id)?.label || 'Auto-selected from appointment'}
+                readOnly
+                style={{ width: '100%', padding: '0.5rem', backgroundColor: '#e9ecef' }}
+              />
+              <input type="hidden" name="patient_id" value={newRecordData.patient_id} />
             </label>
           </div>
 
@@ -1509,9 +1537,6 @@ const MedicalRecordsTab = ({
               Cancel
             </button>
           </div>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#6c757d' }}>
-            * Required fields
-          </p>
         </div>
       )}
 
@@ -1698,7 +1723,7 @@ const MedicalRecordsTab = ({
       )}
 
       {/* Records List Section */}
-      {!selectedRecord && (
+      {!selectedRecord && !showCreateForm && (
         <div>
           {doctorRecords.length > 0 ? (
             <div style={{
@@ -1779,10 +1804,7 @@ const MedicalRecordsTab = ({
               textAlign: 'center',
               color: '#6c757d'
             }}>
-              {currentDoctorId ? 
-                "No medical records found for your patients. Records will appear here after you complete appointments." : 
-                "Please sign in as a doctor to view medical records."
-              }
+              No medical records found for your patients. Records will appear here after you complete appointments.
             </div>
           )}
         </div>
