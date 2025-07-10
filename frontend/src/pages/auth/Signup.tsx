@@ -1,39 +1,84 @@
-
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/context/AuthContext';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: ''
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "patient" as "patient" | "doctor",
   });
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { signup } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
       return;
     }
-    // In a real app, this would create a new user
-    // For demo purposes, we'll just log them in
-    login(formData.email, formData.password);
-    navigate('/');
+
+    setLoading(true);
+    try {
+      const success = await signup(
+        formData.name,
+        formData.email,
+        formData.password,
+        formData.role
+      );
+
+      if (success) {
+        navigate("/");
+        toast({
+          title: "Account created",
+          description: "Welcome to our healthcare system!",
+        });
+      } else {
+        toast({
+          title: "Signup failed",
+          description: "Please try again",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred during signup",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,27 +90,15 @@ export default function SignUp() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="First name"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Last name"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                placeholder="Your full name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -74,13 +107,18 @@ export default function SignUp() {
                 type="email"
                 placeholder="Enter your email"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                onChange={(e) => handleInputChange("email", e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select onValueChange={(value) => handleInputChange('role', value)}>
+              <Select
+                onValueChange={(value: "patient" | "doctor") =>
+                  handleInputChange("role", value)
+                }
+                value={formData.role}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
@@ -97,7 +135,7 @@ export default function SignUp() {
                 type="password"
                 placeholder="Enter your password"
                 value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
+                onChange={(e) => handleInputChange("password", e.target.value)}
                 required
               />
             </div>
@@ -108,17 +146,19 @@ export default function SignUp() {
                 type="password"
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("confirmPassword", e.target.value)
+                }
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Create Account
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link to="/login" className="text-blue-600 hover:underline">
                 Sign in
               </Link>

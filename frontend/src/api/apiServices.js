@@ -165,9 +165,133 @@ const UserService = {
   }
 };
 
+
+// PATIENT SERVICES
+const PatientService = {
+  /**
+   * Get all patients (admin only)
+   * @returns {Promise<Array>} Array of patient objects
+   */
+  getAllPatients: async () => {
+    return apiRequest('GET', 'patients');
+  },
+
+  /**
+   * Get patient by user ID
+   * @param {string} userId - The user ID associated with the patient
+   * @returns {Promise<Object>} Patient object
+   */
+  getPatientByUserId: async (userId) => {
+    if (!userId) throw new Error('User ID is required');
+    return apiRequest('GET', `patients/user/${userId}`);
+  },
+
+  /**
+   * Get current patient profile (patient role required)
+   * @returns {Promise<Object>} Patient object
+   */
+  getMyPatientProfile: async () => {
+    return apiRequest('GET', 'patients/user/me');
+  },
+
+  /**
+   * Get patient by ID
+   * @param {string} patientId - The ID of the patient to retrieve
+   * @returns {Promise<Object>} Patient object
+   */
+  getPatientById: async (patientId) => {
+    if (!patientId) throw new Error('Patient ID is required');
+    return apiRequest('GET', `patients/${patientId}`);
+  },
+
+  /**
+   * Create a new patient
+   * @param {Object} patientData - Patient data to create
+   * @param {string} patientData.first_name - Patient's first name
+   * @param {string} patientData.last_name - Patient's last name
+   * @param {string} patientData.email - Patient's email
+   * @param {string} patientData.phone_number - Patient's phone number
+   * @param {string} patientData.insurance_number - Patient's insurance number
+   * @param {string} patientData.insurance_provider - Patient's insurance provider
+   * @returns {Promise<Object>} Created patient object
+   */
+  createPatient: async (patientData) => {
+    const requiredFields = [
+      'first_name', 
+      'last_name', 
+      'email', 
+      'phone_number', 
+      'insurance_number'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !patientData[field]);
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(patientData.email)) {
+      throw new Error('Invalid email format');
+    }
+
+    return apiRequest('POST', 'patients', patientData);
+  },
+
+  /**
+   * Update a patient
+   * @param {string} patientId - The ID of the patient to update
+   * @param {Object} updateData - Fields to update
+   * @returns {Promise<Object>} Updated patient object
+   */
+  updatePatient: async (patientId, updateData) => {
+    if (!patientId) throw new Error('Patient ID is required');
+    
+    const allowedFields = [
+      'first_name',
+      'last_name',
+      'email',
+      'phone_number',
+      'insurance_number',
+      'insurance_provider'
+    ];
+    
+    const filteredData = Object.keys(updateData)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updateData[key];
+        return obj;
+      }, {});
+
+    return apiRequest('PUT', `patients/${patientId}`, filteredData);
+  },
+
+  /**
+   * Delete a patient
+   * @param {string} patientId - The ID of the patient to delete
+   * @returns {Promise<Object>} Confirmation message
+   */
+  deletePatient: async (patientId) => {
+    if (!patientId) throw new Error('Patient ID is required');
+    return apiRequest('DELETE', `patients/${patientId}`);
+  },
+
+  /**
+   * Get all appointments for a patient
+   * @param {string} patientId - The ID of the patient
+   * @returns {Promise<Array>} Array of appointment objects
+   */
+  getPatientAppointments: async (patientId) => {
+    if (!patientId) throw new Error('Patient ID is required');
+    return apiRequest('GET', `patients/${patientId}/appointments`);
+  }
+};
+
+
 // Export all services
 export default {
   UserService,
   AuthService,
+  PatientService,
   // You can add other services here later (AppointmentService, DoctorService, etc.)
 };

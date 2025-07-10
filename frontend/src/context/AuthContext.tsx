@@ -1,112 +1,121 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
+import api from "@/api/apiServices";
 
 interface User {
   id: number;
+  name: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  role: 'patient' | 'doctor' | 'admin';
+  role: "patient" | "doctor" | "admin";
   phone?: string;
-  date_joined: string;
-  is_active: boolean;
+  date_joined?: string;
+  is_active?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (first_name: string, last_name: string, email: string, password: string, role: 'patient' | 'doctor' | 'admin') => Promise<boolean>;
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+    role: "patient" | "doctor" | "admin"
+  ) => Promise<boolean>;
   logout: () => void;
-  switchRole: (role: 'patient' | 'doctor' | 'admin') => void;
+  switchRole: (role: "patient" | "doctor" | "admin") => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mockUsers: User[] = [
-  {
-    id: 1,
-    email: 'nick@hospial.com',
-    first_name: 'Nicholas',
-    last_name: 'Odiwuor',
-    role: 'patient',
-    phone: '+254712-345678',
-    date_joined: '2025-07-10',
-    is_active: true,
-  },
-  {
-    id: 2,
-    email: 'doctor@demo.com',
-    first_name: 'Dr. Jessy',
-    last_name: 'Johnson',
-    role: 'doctor',
-    phone: '+254712-987654',
-    date_joined: '2023-06-10',
-    is_active: true,
-  },
-  {
-    id: 3,
-    email: 'admin@demo.com',
-    first_name: 'Admin',
-    last_name: 'User',
-    role: 'admin',
-    phone: '+254712-123456',
-    date_joined: '2023-01-01',
-    is_active: true,
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check for existing session on initial load
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const userProfile = await api.UserService.getMyProfile();
+          setUser({
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            role: userProfile.role,
+          });
+        }
+      } catch (error) {
+        console.error("Session check failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock login: find user by email (ignore password check for demo)
-    const foundUser = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (foundUser) {
-      setUser(foundUser);
+    try {
+      const response = await api.AuthService.login(email, password);
+      const userData = {
+        id: response.user.id,
+        name: response.user.name || "",
+        email: response.user.email,
+        role: response.user.role,
+      };
+      setUser(userData);
       return true;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
     }
-    return false;
   };
 
   const signup = async (
-    first_name: string,
-    last_name: string,
+    name: string,
     email: string,
     password: string,
-    role: 'patient' | 'doctor' | 'admin'
+    role: "patient" | "doctor" | "admin"
   ): Promise<boolean> => {
-    // Mock signup: check if email exists
-    const exists = mockUsers.some((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (exists) return false;
+    try {
+      const newUser = await api.UserService.createUser({
+        name,
+        email,
+        password,
+        role,
+      });
 
-    // Create new user (mock id auto-increment)
-    const newUser: User = {
-      id: mockUsers.length + 1,
-      email,
-      first_name,
-      last_name,
-      role,
-      date_joined: new Date().toISOString().split('T')[0],
-      is_active: true,
-    };
-
-    mockUsers.push(newUser);
-    setUser(newUser);
-    return true;
+      // Automatically log in the new user
+      const loginSuccess = await login(email, password);
+      return loginSuccess;
+    } catch (error) {
+      console.error("Signup failed:", error);
+      return false;
+    }
   };
 
   const logout = () => {
+    api.AuthService.logout();
     setUser(null);
   };
 
-  const switchRole = (role: 'patient' | 'doctor' | 'admin') => {
-    const foundUser = mockUsers.find((u) => u.role === role);
-    if (foundUser) {
-      setUser(foundUser);
+  const switchRole = (role: "patient" | "doctor" | "admin") => {
+    if (user) {
+      setUser({ ...user, role });
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, switchRole }}>
+    <AuthContext.Provider
+      value={{ user, login, signup, logout, switchRole, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -115,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }
