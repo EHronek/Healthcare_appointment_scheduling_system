@@ -1,57 +1,86 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/context/AuthContext';
-import { mockAppointments, mockDoctors, mockUsers } from '@/data/mockData';
-import { Calendar, Clock, User, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
+import { Calendar, Clock, User, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { format, parseISO } from "date-fns";
+import api from "@/api/apiServices";
 
 export default function PatientDashboard() {
   const { user } = useAuth();
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get patient's appointments
-  const patientAppointments = mockAppointments.filter(apt => apt.patient === 1); // assuming patient ID 1
-  
-  const upcomingAppointments = patientAppointments.filter(apt => 
-    new Date(apt.appointment_date) >= new Date() && apt.status === 'scheduled'
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        // First get patient profile for current user
+        const patientProfile = await api.PatientService.getMyPatientProfile();
+
+        // Then get appointments for this patient
+        const allAppointments = await api.AppointmentService.getAppointments();
+        const patientAppointments = allAppointments.filter(
+          (apt) => apt.patient_id === patientProfile.id
+        );
+
+        setAppointments(patientAppointments);
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
+
+  const upcomingAppointments = appointments.filter(
+    (apt) =>
+      new Date(apt.scheduled_time) >= new Date() && apt.status === "scheduled"
   );
-  
-  const pastAppointments = patientAppointments.filter(apt => 
-    new Date(apt.appointment_date) < new Date() || apt.status === 'completed'
+
+  const pastAppointments = appointments.filter(
+    (apt) =>
+      new Date(apt.scheduled_time) < new Date() || apt.status === "completed"
   );
-
-  const getDoctorName = (doctorId: number) => {
-    const doctor = mockDoctors.find(d => d.id === doctorId);
-    if (doctor) {
-      const doctorUser = mockUsers.find(u => u.id === doctor.user);
-      return doctorUser ? `${doctorUser.first_name} ${doctorUser.last_name}` : 'Unknown Doctor';
-    }
-    return 'Unknown Doctor';
-  };
-
-  const getDoctorSpecialization = (doctorId: number) => {
-    const doctor = mockDoctors.find(d => d.id === doctorId);
-    return doctor?.specialization || 'General';
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "scheduled":
+        return "bg-blue-100 text-blue-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="text-center py-8">Loading dashboard...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 p-4">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg">
-        <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {user?.first_name} {user?.last_name}!
-        </h1>
-        <p className="opacity-90">Manage your healthcare appointments and records</p>
+        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+        <p className="opacity-90">
+          Manage your healthcare appointments and records
+        </p>
       </div>
 
       {/* Quick Actions */}
@@ -78,7 +107,9 @@ export default function PatientDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{upcomingAppointments.length}</p>
+            <p className="text-2xl font-bold text-green-600">
+              {upcomingAppointments.length}
+            </p>
             <p className="text-sm text-gray-600">appointments scheduled</p>
           </CardContent>
         </Card>
@@ -92,7 +123,9 @@ export default function PatientDashboard() {
           </CardHeader>
           <CardContent>
             <Link to="/patient/medical-records">
-              <Button variant="outline" className="w-full">View Records</Button>
+              <Button variant="outline" className="w-full">
+                View Records
+              </Button>
             </Link>
           </CardContent>
         </Card>
@@ -118,22 +151,37 @@ export default function PatientDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {upcomingAppointments.map((appointment) => (
-                    <tr key={appointment.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-medium">{getDoctorName(appointment.doctor)}</td>
-                      <td className="p-3">{getDoctorSpecialization(appointment.doctor)}</td>
-                      <td className="p-3">{appointment.appointment_date}</td>
-                      <td className="p-3 flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {appointment.appointment_time}
-                      </td>
-                      <td className="p-3">
-                        <Badge className={getStatusColor(appointment.status)}>
-                          {appointment.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
+                  {upcomingAppointments.map((appointment) => {
+                    const appointmentDate = parseISO(
+                      appointment.scheduled_time
+                    );
+                    return (
+                      <tr
+                        key={appointment.id}
+                        className="border-b hover:bg-gray-50"
+                      >
+                        <td className="p-3 font-medium">
+                          {appointment.doctor?.first_name}{" "}
+                          {appointment.doctor?.last_name}
+                        </td>
+                        <td className="p-3">
+                          {appointment.doctor?.specialization}
+                        </td>
+                        <td className="p-3">
+                          {format(appointmentDate, "PPP")}
+                        </td>
+                        <td className="p-3 flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {format(appointmentDate, "p")}
+                        </td>
+                        <td className="p-3">
+                          <Badge className={getStatusColor(appointment.status)}>
+                            {appointment.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -169,27 +217,44 @@ export default function PatientDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pastAppointments.slice(0, 5).map((appointment) => (
-                    <tr key={appointment.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-medium">{getDoctorName(appointment.doctor)}</td>
-                      <td className="p-3">{getDoctorSpecialization(appointment.doctor)}</td>
-                      <td className="p-3">{appointment.appointment_date}</td>
-                      <td className="p-3 flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {appointment.appointment_time}
-                      </td>
-                      <td className="p-3">
-                        <Badge className={getStatusColor(appointment.status)}>
-                          {appointment.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
+                  {pastAppointments.slice(0, 5).map((appointment) => {
+                    const appointmentDate = parseISO(
+                      appointment.scheduled_time
+                    );
+                    return (
+                      <tr
+                        key={appointment.id}
+                        className="border-b hover:bg-gray-50"
+                      >
+                        <td className="p-3 font-medium">
+                          {appointment.doctor?.first_name}{" "}
+                          {appointment.doctor?.last_name}
+                        </td>
+                        <td className="p-3">
+                          {appointment.doctor?.specialization}
+                        </td>
+                        <td className="p-3">
+                          {format(appointmentDate, "PPP")}
+                        </td>
+                        <td className="p-3 flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {format(appointmentDate, "p")}
+                        </td>
+                        <td className="p-3">
+                          <Badge className={getStatusColor(appointment.status)}>
+                            {appointment.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-4">No past appointments</p>
+            <p className="text-gray-500 text-center py-4">
+              No past appointments
+            </p>
           )}
         </CardContent>
       </Card>
