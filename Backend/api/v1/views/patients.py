@@ -24,22 +24,6 @@ def get_all_patients():
     return jsonify([patient.to_dict() for patient in patients]), 200
 
 
-@app_views.route('/patients/user/<string:user_id>', methods=['GET'], strict_slashes=False)
-@jwt_required()
-@role_required('patient', 'admin')
-def get_patient_profile(user_id):
-    """Retrieves a specific patient based on its user ID"""
-    sess = storage.get_session()
-    patient = sess.query(Patient).filter_by(user_id=user_id).first()
-
-    if not patient:
-        return jsonify({"error": "patient not found"}), 404
-    
-    return jsonify(patient.to_dict()), 200
-
-
-
-
 @app_views.route("/patients/<patient_id>", methods=["GET"], strict_slashes=False)
 @jwt_required()
 @role_required('admin', 'patient')
@@ -62,7 +46,7 @@ def get_patient_by_user_id(user_id):
     return jsonify(patient.to_dict()), 200
 
 
-@app_views.route('/patients/user/me', method=["GET"], strict_slashes=False)
+@app_views.route('/patients/user/me', methods=["GET"], strict_slashes=False)
 @jwt_required()
 @role_required('patient')
 def get_patient_from_session():
