@@ -1,7 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
-import { Badge } from '@/components/ui/badge';
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 export function Navigation() {
   const { user, logout, switchRole } = useAuth();
@@ -30,32 +30,33 @@ export function Navigation() {
   }
 
   const getNavLinks = () => {
-    const baseClass = "text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md transition-colors";
+    const baseClass =
+      "text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md transition-colors";
     const activeClass = "text-blue-600 bg-blue-50";
 
     switch (user.role) {
-      case 'patient':
+      case "patient":
         return [
-          { path: '/patient/dashboard', label: 'Dashboard' },
-          { path: '/patient/book-appointment', label: 'Book Appointment' },
-          { path: '/patient/medical-records', label: 'Medical Records' },
-          { path: '/patient/profile', label: 'Profile' },
+          { path: "/patient/dashboard", label: "Dashboard" },
+          { path: "/patient/book-appointment", label: "Book Appointment" },
+          { path: "/patient/medical-records", label: "Medical Records" },
+          { path: "/patient/profile", label: "Profile" },
         ];
-      case 'doctor':
+      case "doctor":
         return [
-          { path: '/doctor/dashboard', label: 'Dashboard' },
-          { path: '/doctor/availability', label: 'Availability' },
-          { path: '/doctor/appointments', label: 'Appointments' },
-          { path: '/doctor/medical-records', label: 'Medical Records' },
-          { path: '/doctor/exceptions', label: 'Exceptions' },
+          { path: "/doctor/dashboard", label: "Dashboard" },
+          { path: "/doctor/availability", label: "Availability" },
+          { path: "/doctor/appointments", label: "Appointments" },
+          { path: "/doctor/medical-records", label: "Medical Records" },
+          { path: "/doctor/exceptions", label: "Exceptions" },
         ];
-      case 'admin':
+      case "admin":
         return [
-          { path: '/admin/dashboard', label: 'Dashboard' },
-          { path: '/admin/users', label: 'Users' },
-          { path: '/admin/doctors', label: 'Doctors' },
-          { path: '/admin/patients', label: 'Patients' },
-          { path: '/admin/appointments', label: 'Appointments' },
+          { path: "/admin/dashboard", label: "Dashboard" },
+          { path: "/admin/users", label: "Users" },
+          { path: "/admin/doctors", label: "Doctors" },
+          { path: "/admin/patients", label: "Patients" },
+          { path: "/admin/appointments", label: "Appointments" },
         ];
       default:
         return [];
@@ -76,7 +77,9 @@ export function Navigation() {
                   key={link.path}
                   to={link.path}
                   className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md transition-colors ${
-                    location.pathname === link.path ? 'text-blue-600 bg-blue-50' : ''
+                    location.pathname === link.path
+                      ? "text-blue-600 bg-blue-50"
+                      : ""
                   }`}
                 >
                   {link.label}
@@ -88,31 +91,29 @@ export function Navigation() {
             <Badge variant="outline" className="capitalize">
               {user.role}
             </Badge>
-            <span className="text-sm text-gray-600">
-              {user.first_name} {user.last_name}
-            </span>
+            <span className="text-sm text-gray-600">{user.name}</span>
             <div className="flex space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => switchRole('patient')}
-                disabled={user.role === 'patient'}
+                onClick={() => switchRole("patient")}
+                disabled={user.role === "patient"}
               >
                 Patient
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => switchRole('doctor')}
-                disabled={user.role === 'doctor'}
+                onClick={() => switchRole("doctor")}
+                disabled={user.role === "doctor"}
               >
                 Doctor
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => switchRole('admin')}
-                disabled={user.role === 'admin'}
+                onClick={() => switchRole("admin")}
+                disabled={user.role === "admin"}
               >
                 Admin
               </Button>
