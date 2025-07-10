@@ -295,7 +295,7 @@ const DoctorService = {
    * @returns {Promise<Array>} Array of doctor objects
    */
   getAllDoctors: async () => {
-    return apiRequest('GET', 'doctors');
+    return apiRequest('GET', 'api/v1/doctors');
   },
 
   /**
@@ -305,7 +305,7 @@ const DoctorService = {
    */
   getDoctorById: async (doctorId) => {
     if (!doctorId) throw new Error('Doctor ID is required');
-    return apiRequest('GET', `doctors/${doctorId}`);
+    return apiRequest('GET', `api/v1/doctors/${doctorId}`);
   },
 
   /**
@@ -315,7 +315,7 @@ const DoctorService = {
    */
   getDoctorByUserId: async (userId) => {
     if (!userId) throw new Error('User ID is required');
-    return apiRequest('GET', `doctors/user/${userId}`);
+    return apiRequest('GET', `api/v1/doctors/user/${userId}`);
   },
 
   /**
@@ -323,7 +323,7 @@ const DoctorService = {
    * @returns {Promise<Object>} Doctor object
    */
   getMyDoctorProfile: async () => {
-    return apiRequest('GET', 'doctors/user/me');
+    return apiRequest('GET', 'api/v1/doctors/user/me');
   },
 
   /**
@@ -356,7 +356,7 @@ const DoctorService = {
       throw new Error('Invalid email format');
     }
 
-    return apiRequest('POST', 'doctors', doctorData);
+    return apiRequest('POST', 'api/v1/doctors', doctorData);
   },
 
   /**
@@ -383,7 +383,7 @@ const DoctorService = {
         return obj;
       }, {});
 
-    return apiRequest('PUT', `doctors/${doctorId}`, filteredData);
+    return apiRequest('PUT', `api/v1/doctors/${doctorId}`, filteredData);
   },
 
   /**
@@ -393,7 +393,7 @@ const DoctorService = {
    */
   deleteDoctor: async (doctorId) => {
     if (!doctorId) throw new Error('Doctor ID is required');
-    return apiRequest('DELETE', `doctors/${doctorId}`);
+    return apiRequest('DELETE', `api/v1/doctors/${doctorId}`);
   },
 
   /**
@@ -403,7 +403,7 @@ const DoctorService = {
    */
   getDoctorAvailabilities: async (doctorId) => {
     if (!doctorId) throw new Error('Doctor ID is required');
-    return apiRequest('GET', `doctors/${doctorId}/availabilities`);
+    return apiRequest('GET', `api/v1/doctors/${doctorId}/availabilities`);
   },
 
   /**
@@ -413,7 +413,7 @@ const DoctorService = {
    */
   getDoctorAppointments: async (doctorId) => {
     if (!doctorId) throw new Error('Doctor ID is required');
-    return apiRequest('GET', `doctors/${doctorId}/appointments`);
+    return apiRequest('GET', `api/v1/doctors/${doctorId}/appointments`);
   },
 
   /**
@@ -423,7 +423,7 @@ const DoctorService = {
    */
   getDoctorExceptions: async (doctorId) => {
     if (!doctorId) throw new Error('Doctor ID is required');
-    return apiRequest('GET', `doctors/${doctorId}/exceptions`);
+    return apiRequest('GET', `api/v1/doctors/${doctorId}/exceptions`);
   },
 
   /**
@@ -433,7 +433,7 @@ const DoctorService = {
    */
   getDoctorMedicalRecords: async (doctorId) => {
     if (!doctorId) throw new Error('Doctor ID is required');
-    return apiRequest('GET', `doctors/${doctorId}/medical_records`);
+    return apiRequest('GET', `api/v1/doctors/${doctorId}/medical_records`);
   }
 };
 
