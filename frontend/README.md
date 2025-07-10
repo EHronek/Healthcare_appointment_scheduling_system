@@ -1,73 +1,34 @@
-# Welcome to your Lovable project
+# Health Appointment Scheduling System - Frontend
 
-## Project info
+This is the React-based frontend for the Health Appointment Scheduling System, built with TypeScript and Tailwind CSS to provide a responsive and user-friendly interface.
 
-**URL**: https://lovable.dev/projects/6a76f87d-926b-4739-8c05-722fe6f7722d
+---
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Responsive UI with React and Tailwind CSS  
+- TypeScript for type safety and better developer experience  
+- Integration with backend API for managing appointments, doctors, patients, and more
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6a76f87d-926b-4739-8c05-722fe6f7722d) and start prompting.
+## Setup
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Ensure [Node.js](https://nodejs.org/) and npm are installed  
+2. Navigate to the `frontend` directory  
+3. Install dependencies:
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+   ```bash
+   npm install
+4. Start the development server:
 npm run dev
-```
+5. Open your browser at http://localhost:3000
 
-**Edit a file directly in GitHub**
+Technologies
+React
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+TypeScript
 
-**Use GitHub Codespaces**
+Tailwind CSS
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6a76f87d-926b-4739-8c05-722fe6f7722d) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Vite (build tool)
