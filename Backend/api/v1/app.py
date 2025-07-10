@@ -2,7 +2,7 @@
 """Flask App"""
 import models
 from models.user import User
-from flask import Flask, jsonify, url_for, session, request
+from flask import Flask, jsonify, url_for, session, request, redirect
 import os
 from api.v1.views import app_views
 from authlib.integrations.flask_client import OAuth
@@ -57,6 +57,11 @@ Session(app)
 
 # CORS configuration - only allow frontend origins
 # CORS(app, origins=[''], supports_credentials=True)
+
+cors = CORS(app, origins=["http://localhost:8080"],
+            allow_headers=["Content-Type", "Authorization"],
+            methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            supports_credentials=True)
 
 
 # OAuth Setup
@@ -148,8 +153,9 @@ def authorize():
         #session['user_id'] = user.id
         #user = models.storage.get(User, session['user_id'])
 
-        # print(user)
-        return jsonify(access_token=access_token, refresh_token=refresh_token), 200
+        frontend_redirect_url = f"http://localhost:3000/oauth-callback?access_token={access_token}&refresh_token={refresh_token}"
+        #return jsonify(access_token=access_token, refresh_token=refresh_token), 200
+        return redirect(frontend_redirect_url)
     
     except Exception as e:
         return jsonify(error=str(e)), 500

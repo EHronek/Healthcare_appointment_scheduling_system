@@ -7,6 +7,7 @@ from api.v1.views import app_views
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from api.v1.helper_functions import role_required
 import re
+from models.user import User
 
 
 @app_views.route('/patients', methods=["GET"], strict_slashes=False)
@@ -23,6 +24,21 @@ def get_all_patients():
     return jsonify([patient.to_dict() for patient in patients]), 200
 
 
+@app_views.route('/patients/user/<string:user_id>', methods=['GET'], strict_slashes=False)
+@jwt_required()
+@role_required('patient', 'admin')
+def get_patient_profile(user_id):
+    """Retrieves a specific patient based on its user ID"""
+    sess = storage.get_session()
+    patient = sess.query(Patient).filter_by(user_id=user_id).first()
+
+    if not patient:
+        return jsonify({"error": "patient not found"}), 404
+    
+    return jsonify(patient.to_dict()), 200
+
+
+
 
 @app_views.route("/patients/<patient_id>", methods=["GET"], strict_slashes=False)
 @jwt_required()
@@ -32,6 +48,38 @@ def get_patient_by_id(patient_id):
     patient = storage.get(Patient, patient_id)
     if not patient:
         return jsonify({"error": "not found"}), 404
+    return jsonify(patient.to_dict()), 200
+
+
+@app_views.route('/patients/user/<string:user_id>', methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_patient_by_user_id(user_id):
+    """Retrieves a specific patient by user_id"""
+    sess = storage.get_session()
+    patient = sess.query(Patient).filter_by(user_id=user_id).first()
+    if not patient:
+        return jsonify({"error": "patient not found"}), 404
+    return jsonify(patient.to_dict()), 200
+
+
+@app_views.route('/patients/user/me', method=["GET"], strict_slashes=False)
+@jwt_required()
+@role_required('patient')
+def get_patient_from_session():
+    """Retrieves patient data based on the current logged in user"""
+    user_id = get_jwt_identity()
+    current_user = storage.get(User, user_id)
+
+    if not current_user:
+        return jsonify({"error": "user not found"}), 404
+    if current_user.role != 'patient':
+        return jsonify({"error": "Unauthorized user, must be a patient"}), 403
+
+    sess = storage.get_session()
+    patient = sess.query(Patient).filter_by(user_id=user_id).first()
+    
+    if not patient:
+        return jsonify({"error": "patient not found"}), 404
     return jsonify(patient.to_dict()), 200
 
 

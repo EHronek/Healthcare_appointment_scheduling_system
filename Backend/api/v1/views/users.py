@@ -45,10 +45,8 @@ def get_user_by_id(user_id):
 
 
 @app_views.route('/users', methods=["POST"], strict_slashes=False)
-@jwt_required()
-@role_required('admin')
 def create_user():
-    """Creates a new user """
+    """Creates a new user (public signup endpoint)"""
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid json data"}), 400
@@ -58,36 +56,17 @@ def create_user():
         if field not in data:
             return jsonify({"error": f"Missing {field}"}), 400
         
-    if data['role'] not in ['admin', 'doctor', 'patient']:
+    if data['role'] not in ['patient', 'doctor']:  # Remove 'admin' from public signup
         return jsonify({"error": "Invalid role"}), 400
     
-    """ print("Type", type(data['role']))
-    print("isintace=> ", isinstance(data['role'], tuple))
-    print("data", data['role']) """
-    #role = data['role']
-
     if storage.get_user_by_email(data.get("email")):
         return jsonify({"error": "email already exists"}), 400
 
     new_user = User()
-    """ new_user.name=data["name"],
-    new_user.password=new_user._hash_password(data['password']),
-    new_user.role=role,
-    new_user.email=data["email"] """
     new_user.name = data.get("name")
     new_user.email = data.get("email")
-
-    hashed_pw = new_user._hash_password(data.get('password'))
-    new_user.password = hashed_pw
-
+    new_user.password = new_user._hash_password(data.get('password'))
     new_user.role = data.get("role")
-    
-
-
-    """ print(new_user.role)
-    print(type(new_user.role))
-    #new_user.role=role
-    print(new_user.role, type(new_user.role)) """
 
     storage.new(new_user)
     storage.save()
