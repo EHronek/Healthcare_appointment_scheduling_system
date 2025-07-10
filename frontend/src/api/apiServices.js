@@ -173,7 +173,7 @@ const PatientService = {
    * @returns {Promise<Array>} Array of patient objects
    */
   getAllPatients: async () => {
-    return apiRequest('GET', 'patients');
+    return apiRequest('GET', 'api/v1/patients');
   },
 
   /**
@@ -183,7 +183,7 @@ const PatientService = {
    */
   getPatientByUserId: async (userId) => {
     if (!userId) throw new Error('User ID is required');
-    return apiRequest('GET', `patients/user/${userId}`);
+    return apiRequest('GET', `api/v1/patients/user/${userId}`);
   },
 
   /**
@@ -191,7 +191,7 @@ const PatientService = {
    * @returns {Promise<Object>} Patient object
    */
   getMyPatientProfile: async () => {
-    return apiRequest('GET', 'patients/user/me');
+    return apiRequest('GET', 'api/v1/patients/user/me');
   },
 
   /**
@@ -201,7 +201,7 @@ const PatientService = {
    */
   getPatientById: async (patientId) => {
     if (!patientId) throw new Error('Patient ID is required');
-    return apiRequest('GET', `patients/${patientId}`);
+    return apiRequest('GET', `api/v1/patients/${patientId}`);
   },
 
   /**
@@ -235,7 +235,7 @@ const PatientService = {
       throw new Error('Invalid email format');
     }
 
-    return apiRequest('POST', 'patients', patientData);
+    return apiRequest('POST', 'api/v1/patients', patientData);
   },
 
   /**
@@ -263,7 +263,7 @@ const PatientService = {
         return obj;
       }, {});
 
-    return apiRequest('PUT', `patients/${patientId}`, filteredData);
+    return apiRequest('PUT', `api/v1/patients/${patientId}`, filteredData);
   },
 
   /**
@@ -273,7 +273,7 @@ const PatientService = {
    */
   deletePatient: async (patientId) => {
     if (!patientId) throw new Error('Patient ID is required');
-    return apiRequest('DELETE', `patients/${patientId}`);
+    return apiRequest('DELETE', `api/v1/patients/${patientId}`);
   },
 
   /**
@@ -283,7 +283,7 @@ const PatientService = {
    */
   getPatientAppointments: async (patientId) => {
     if (!patientId) throw new Error('Patient ID is required');
-    return apiRequest('GET', `patients/${patientId}/appointments`);
+    return apiRequest('GET', `api/v1/patients/${patientId}/appointments`);
   }
 };
 
