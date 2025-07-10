@@ -288,10 +288,161 @@ const PatientService = {
 };
 
 
+// DOCTOR SERVICES
+const DoctorService = {
+  /**
+   * Get all doctors (admin only)
+   * @returns {Promise<Array>} Array of doctor objects
+   */
+  getAllDoctors: async () => {
+    return apiRequest('GET', 'doctors');
+  },
+
+  /**
+   * Get doctor by ID
+   * @param {string} doctorId - The ID of the doctor to retrieve
+   * @returns {Promise<Object>} Doctor object
+   */
+  getDoctorById: async (doctorId) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    return apiRequest('GET', `doctors/${doctorId}`);
+  },
+
+  /**
+   * Get doctor by user ID
+   * @param {string} userId - The user ID associated with the doctor
+   * @returns {Promise<Object>} Doctor object
+   */
+  getDoctorByUserId: async (userId) => {
+    if (!userId) throw new Error('User ID is required');
+    return apiRequest('GET', `doctors/user/${userId}`);
+  },
+
+  /**
+   * Get current doctor profile (doctor role required)
+   * @returns {Promise<Object>} Doctor object
+   */
+  getMyDoctorProfile: async () => {
+    return apiRequest('GET', 'doctors/user/me');
+  },
+
+  /**
+   * Create a new doctor (admin only)
+   * @param {Object} doctorData - Doctor data to create
+   * @param {string} doctorData.first_name - Doctor's first name
+   * @param {string} doctorData.last_name - Doctor's last name
+   * @param {string} doctorData.email - Doctor's email
+   * @param {string} doctorData.specialization - Doctor's specialization
+   * @param {string} doctorData.user_id - Associated user ID
+   * @returns {Promise<Object>} Created doctor object
+   */
+  createDoctor: async (doctorData) => {
+    const requiredFields = [
+      'first_name',
+      'last_name',
+      'email',
+      'specialization',
+      'user_id'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !doctorData[field]);
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(doctorData.email)) {
+      throw new Error('Invalid email format');
+    }
+
+    return apiRequest('POST', 'doctors', doctorData);
+  },
+
+  /**
+   * Update a doctor
+   * @param {string} doctorId - The ID of the doctor to update
+   * @param {Object} updateData - Fields to update
+   * @returns {Promise<Object>} Updated doctor object
+   */
+  updateDoctor: async (doctorId, updateData) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    
+    const allowedFields = [
+      'first_name',
+      'last_name',
+      'email',
+      'specialization',
+      'user_id'
+    ];
+    
+    const filteredData = Object.keys(updateData)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updateData[key];
+        return obj;
+      }, {});
+
+    return apiRequest('PUT', `doctors/${doctorId}`, filteredData);
+  },
+
+  /**
+   * Delete a doctor (admin only)
+   * @param {string} doctorId - The ID of the doctor to delete
+   * @returns {Promise<Object>} Confirmation message
+   */
+  deleteDoctor: async (doctorId) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    return apiRequest('DELETE', `doctors/${doctorId}`);
+  },
+
+  /**
+   * Get doctor availabilities
+   * @param {string} doctorId - The ID of the doctor
+   * @returns {Promise<Array>} Array of availability objects
+   */
+  getDoctorAvailabilities: async (doctorId) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    return apiRequest('GET', `doctors/${doctorId}/availabilities`);
+  },
+
+  /**
+   * Get doctor appointments
+   * @param {string} doctorId - The ID of the doctor
+   * @returns {Promise<Array>} Array of appointment objects
+   */
+  getDoctorAppointments: async (doctorId) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    return apiRequest('GET', `doctors/${doctorId}/appointments`);
+  },
+
+  /**
+   * Get doctor exceptions
+   * @param {string} doctorId - The ID of the doctor
+   * @returns {Promise<Array>} Array of exception objects
+   */
+  getDoctorExceptions: async (doctorId) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    return apiRequest('GET', `doctors/${doctorId}/exceptions`);
+  },
+
+  /**
+   * Get doctor medical records
+   * @param {string} doctorId - The ID of the doctor
+   * @returns {Promise<Array>} Array of medical record objects
+   */
+  getDoctorMedicalRecords: async (doctorId) => {
+    if (!doctorId) throw new Error('Doctor ID is required');
+    return apiRequest('GET', `doctors/${doctorId}/medical_records`);
+  }
+};
+
+
 // Export all services
 export default {
   UserService,
   AuthService,
   PatientService,
+  DoctorService,
   // You can add other services here later (AppointmentService, DoctorService, etc.)
 };
