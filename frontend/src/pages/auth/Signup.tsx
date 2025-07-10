@@ -15,8 +15,7 @@ export default function SignUp() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: '',
-    phone: ''
+    role: ''
   });
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -77,16 +76,6 @@ export default function SignUp() {
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
               />
             </div>
             <div className="space-y-2">
