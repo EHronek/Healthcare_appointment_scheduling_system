@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -17,8 +16,12 @@ export function Navigation() {
               HealthCare Appointment Scheduling System
             </Link>
             <div className="space-x-4">
-              <Button variant="outline">Login</Button>
-              <Button>Sign Up</Button>
+              <Link to="/login" tabIndex={-1}>
+                <Button variant="outline">Login</Button>
+              </Link>
+              <Link to="/signup" tabIndex={-1}>
+                <Button>Sign Up</Button>
+              </Link>
             </div>
           </div>
         </div>
