@@ -41,6 +41,51 @@ const apiRequest = async (method, endpoint, data = null, params = null) => {
   }
 };
 
+
+// AUTHENTICATION SERVICES
+const AuthService = {
+  /**
+   * Login user with email and password
+   * @param {string} email - User's email
+   * @param {string} password - User's password
+   * @returns {Promise<Object>} Response with tokens and user info
+   */
+  login: async (email, password) => {
+    if (!email || !password) {
+      throw new Error('Missing email or password');
+    }
+    
+    const response = await apiRequest('POST', 'login-user', { email, password });
+    
+    // Store tokens in localStorage upon successful login
+    if (response.access_token && response.refresh_token) {
+      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('refreshToken', response.refresh_token);
+    }
+    
+    return response;
+  },
+
+  /**
+   * Logout user by removing tokens from storage
+   */
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+  },
+
+  /**
+   * Get current authentication status
+   * @returns {boolean} True if user is authenticated
+   */
+  isAuthenticated: () => {
+    return !!localStorage.getItem('token');
+  }
+};
+
+
+
+
 // USER SERVICES
 const UserService = {
   /**
@@ -123,5 +168,6 @@ const UserService = {
 // Export all services
 export default {
   UserService,
+  AuthService,
   // You can add other services here later (AppointmentService, DoctorService, etc.)
 };
