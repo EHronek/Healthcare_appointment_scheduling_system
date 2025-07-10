@@ -7,6 +7,7 @@ from api.v1.views import app_views
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from api.v1.helper_functions import role_required
 import re
+from models.user import User
 
 
 @app_views.route('/doctors', methods=["GET"], strict_slashes=False)
@@ -31,6 +32,40 @@ def get_doctor_by_id(doctor_id):
     if not doctor:
         return jsonify({"error": "doctor not found"}), 404
     return jsonify(doctor.to_dict()), 200
+
+
+
+@app_views.route('/doctors/user/<string:user_id>', methods=["GET"], strict_slashes=False)
+@jwt_required()
+def get_doctor_by_user_id(user_id):
+    """Retrieves a specific doctor by user_id"""
+    sess = storage.get_session()
+    doctor = sess.query(Doctor).filter_by(user_id=user_id).first()
+    if not doctor:
+        return jsonify({"error": "doctor not found"}), 404
+    return jsonify(doctor.to_dict()), 200
+
+
+@app_views.route('/doctors/user/me', methods=["GET"], strict_slashes=False)
+@jwt_required()
+@role_required('doctor')
+def get_doctor_from_session():
+    """Retrieves doctor data based on the current logged in user"""
+    user_id = get_jwt_identity()
+    current_user = storage.get(User, user_id)
+
+    if not current_user:
+        return jsonify({"error": "user not found"}), 404
+    if current_user.role != 'doctor':
+        return jsonify({"error": "Unauthorized user, must be a doctor"}), 403
+
+    sess = storage.get_session()
+    doctor = sess.query(Doctor).filter_by(user_id=user_id).first()
+    
+    if not doctor:
+        return jsonify({"error": "doctor not found"}), 404
+    return jsonify(doctor.to_dict()), 200
+
 
 
 @app_views.route('/doctors/<string:doctor_id>/availabilities', methods=['GET'], strict_slashes=False)
