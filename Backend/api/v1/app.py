@@ -153,9 +153,9 @@ def authorize():
         #session['user_id'] = user.id
         #user = models.storage.get(User, session['user_id'])
 
-        frontend_redirect_url = f"http://localhost:3000/oauth-callback?access_token={access_token}&refresh_token={refresh_token}"
-        #return jsonify(access_token=access_token, refresh_token=refresh_token), 200
-        return redirect(frontend_redirect_url)
+        # frontend_redirect_url = f"http://localhost:3000/oauth-callback?access_token={access_token}&refresh_token={refresh_token}"
+        return jsonify(access_token=access_token, refresh_token=refresh_token), 200
+        # return redirect(frontend_redirect_url)
     
     except Exception as e:
         return jsonify(error=str(e)), 500
