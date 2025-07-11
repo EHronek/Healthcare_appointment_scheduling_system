@@ -22,7 +22,7 @@ This is the React-based frontend for the Health Appointment Scheduling System, b
    npm install
 4. Start the development server:
 npm run dev
-5. Open your browser at http://localhost:3000
+5. Open your browser at http://localhost:8080/
 
 Technologies
 React
